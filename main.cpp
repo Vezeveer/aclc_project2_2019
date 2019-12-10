@@ -59,17 +59,17 @@ public:
   }
 };
 
-string currentAccount;
-
 void other();
 void depositing(string), withdrawing();
-void summaryAdmin(), summary(int);
+void summaryAdmin(), summary(int, string); //takes in index
 void title(std::string pTitle, std::string pOptions);
 void createAcc();
 void home(), homeUser(), homeAdmin();
 void deleteAcc();
 
 std::vector<Account> dbAccounts; //will act as our database
+bool found;
+string currentAccount;
 
 int main()
 {
@@ -81,6 +81,20 @@ int main()
   return 0;
 }
 
+void home()
+{
+  int x;
+  title("Select an option:",
+        "1. User\n2. Admin\n");
+  cout << "\n-----------------------------------\n\n";
+  cin >> x;
+  cin.ignore();
+  if (x == 1)
+    homeUser();
+  else
+    homeAdmin();
+}
+
 void homeAdmin()
 {
   int option;
@@ -88,6 +102,7 @@ void homeAdmin()
         "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n5. Delete\n6. Switch to user");
   cout << "\n-----------------------------------\n\n";
   cin >> option;
+  cin.ignore();
   switch (option)
   {
   case 1:
@@ -114,33 +129,37 @@ void homeAdmin()
   }
 }
 
-void home()
-{
-  int x;
-  title("Select an option:",
-        "1. User\n2. Admin\n");
-  cout << "\n-----------------------------------\n\n";
-  cin >> x;
-  if (x == 1)
-    homeUser();
-  else
-    homeAdmin();
-}
-
 void homeUser()
 {
-  int option;
-  title("Welcome. Please select one of the following:",
-        "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n5. Delete\n6. Switch to user");
-  cout << "\n-----------------------------------\n\n";
-  cin >> option;
-  switch (option)
+  string option;
+  if (!found)
   {
-  case 1:
-    cout << "yolo";
-    break;
-  default:
-    break;
+    title("Enter full name of account:", "");
+    std::getline(cin, currentAccount);
+  }
+  for (int i = 0; i < dbAccounts.size(); i++)
+  {
+    if (currentAccount == dbAccounts[i].getFullName())
+    {
+      found = true;
+      title("Welcome, user. Please select one of the following:",
+            "1. Summary\n2. Deposit\n3. Withdraw\n4. Switch to admin");
+      cout << "\n-----------------------------------\n\n";
+      std::getline(cin, option);
+      if (option == "1")
+        summary(i, "user");
+      if (option == "4")
+      {
+        found = false;
+        home();
+      }
+    }
+  }
+  if (found == false)
+  {
+    cout << "Account not found." << std::endl;
+    system("pause");
+    homeUser();
   }
 }
 
@@ -149,9 +168,9 @@ void createAcc() //done
   string firstName, lastName, password;
   double initialAmount;
   title("Create Account", "Your first name: \n");
-  cin >> firstName;
+  std::getline(cin, firstName);
   cout << "Your last name: \n";
-  cin >> lastName;
+  std::getline(cin, lastName);
   do
   {
     if (initialAmount > 50000)
@@ -159,9 +178,11 @@ void createAcc() //done
     else
       cout << "Initial amount: \n";
     cin >> initialAmount;
+    cin.ignore();
   } while (initialAmount > 50000);
   cout << "Password: \n";
   cin >> password;
+  cin.ignore();
   dbAccounts.push_back(Account(firstName, lastName, password, initialAmount));
 }
 
@@ -177,12 +198,12 @@ void summaryAdmin() //done
 
   cout << "\n";
   cin >> x;
+  cin.ignore();
 
-  summary(x - 1);
-  homeAdmin();
+  summary(x - 1, "admin");
 }
 
-void summary(int i) //done
+void summary(int i, string adminOrUser) //done
 {
   title("SUMMARY", "");
   cout << std::fixed << std::setprecision(0) //removes scientific notation
@@ -191,6 +212,10 @@ void summary(int i) //done
        << std::endl;
 
   system("pause");
+  if (adminOrUser == "admin")
+    homeAdmin();
+  else
+    homeUser();
 }
 
 void withdrawing()
@@ -203,6 +228,7 @@ void depositing(string adminOrUser)
   double x;
   title("How much would you like to deposit?", "");
   cin >> x;
+  cin.ignore();
 
   if (adminOrUser == "admin")
     homeAdmin();
