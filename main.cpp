@@ -1,12 +1,50 @@
-//Description: This program will perform most of the things that
-// a normal bank account system would do
+//Description: This program will perform most of the
+//things that a normal bank account system would do
 //Title: Simple Account App
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 using std::cin;
 using std::cout;
+using std::string;
+
+class Account
+{
+  //private variables
+  string firstName, lastName, password;
+  double amount;
+
+public:
+  //constructor (initializes account)
+  Account(string fName,
+          string lName,
+          string xPass,
+          double xAmount)
+      : firstName(fName),
+        lastName(lName),
+        password(xPass),
+        amount(xAmount)
+  {
+  }
+
+  std::string getFullName()
+  {
+    string fullName = firstName + " " + lastName;
+    return fullName;
+  }
+
+  std::string getFirstName()
+  {
+    return firstName;
+  }
+
+  std::string getLastName()
+  {
+    return lastName;
+  }
+};
 
 int option = 0;
 double savings = 0, withdraw = 0, deposit = 0;
@@ -17,10 +55,13 @@ void home();
 void withdrawing();
 void summary();
 void title(std::string pTitle, std::string pOptions);
+void createAcc();
+
+std::vector<Account> dbAccounts; //will act as our database
 
 int main()
 {
-  depositing();
+  createAcc();
   home();
 
   system("pause");
@@ -50,6 +91,21 @@ void home()
   default:
     break;
   }
+}
+
+void createAcc()
+{
+  string firstName, lastName, password;
+  double initialAmount;
+  title("Create Account", "Your first name: \n");
+  cin >> firstName;
+  cout << "Your last name: \n";
+  cin >> lastName;
+  cout << "Initial amount: \n";
+  cin >> initialAmount;
+  cout << "Password: \n";
+  cin >> password;
+  dbAccounts.push_back(Account(firstName, lastName, password, initialAmount));
 }
 
 void newAccount()
