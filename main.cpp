@@ -15,17 +15,20 @@ class Account
   //private variables
   string firstName, lastName, password;
   double amount;
+  int id;
 
 public:
   //constructor (initializes account)
   Account(string fName,
           string lName,
           string xPass,
-          double xAmount)
+          double xAmount,
+          int xId)
       : firstName(fName),
         lastName(lName),
         password(xPass),
-        amount(xAmount)
+        amount(xAmount),
+        id(xId)
   {
   }
 
@@ -34,66 +37,110 @@ public:
     string fullName = firstName + " " + lastName;
     return fullName;
   }
-
   std::string getFirstName()
   {
     return firstName;
   }
-
   std::string getLastName()
   {
     return lastName;
   }
+  double getAmount()
+  {
+    return amount;
+  }
+  void depositAmount(double xAmount)
+  {
+    amount += xAmount;
+  }
+  void withdrawAmount(double yAmount)
+  {
+    amount -= yAmount;
+  }
+  int getId()
+  {
+    return id;
+  }
 };
 
+int idIncrementer = 0;
 int option = 0;
 double savings = 0, withdraw = 0, deposit = 0;
 
 void other();
-void depositing();
-void home();
-void withdrawing();
-void summary();
+void depositing(), withdrawing();
+void summaryAdmin(), summary(int);
 void title(std::string pTitle, std::string pOptions);
 void createAcc();
+void home(), homeUser(), homeAdmin();
+void deleteAcc();
 
 std::vector<Account> dbAccounts; //will act as our database
 
 int main()
 {
   createAcc();
+
   home();
 
   system("pause");
   return 0;
 }
 
-void home()
+void homeAdmin()
 {
+
   title("Welcome. Please select one of the following:",
-        "1. Withdraw\n2. Deposit\n3. Account Summary\n4. Other");
+        "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n5. Delete\n6. Switch to user");
   cout << "\n-----------------------------------\n\n";
   cin >> option;
   switch (option)
   {
   case 1:
-    summary();
+    summaryAdmin();
     break;
   case 2:
     depositing();
     break;
   case 3:
-    summary();
+    withdrawing();
     break;
   case 4:
-    other();
+    createAcc();
+    break;
+  case 5:
+    deleteAcc();
+    break;
+  case 6:
+    homeUser();
     break;
   default:
+    home();
     break;
   }
 }
 
-void createAcc()
+void home()
+{
+  int x;
+  title("Select an option:",
+        "1. User\n2. Admin\n");
+  cout << "\n-----------------------------------\n\n";
+  cin >> x;
+  if (x == 1)
+    homeUser();
+  else
+    homeAdmin();
+}
+
+void homeUser()
+{
+  //undefined
+  //undefined
+  //undefined
+}
+
+void createAcc() //done
 {
   string firstName, lastName, password;
   double initialAmount;
@@ -105,7 +152,9 @@ void createAcc()
   cin >> initialAmount;
   cout << "Password: \n";
   cin >> password;
-  dbAccounts.push_back(Account(firstName, lastName, password, initialAmount));
+  dbAccounts.push_back(Account(firstName, lastName, password, initialAmount, idIncrementer));
+
+  idIncrementer++;
 }
 
 void newAccount()
@@ -117,17 +166,35 @@ void newAccount()
   //cin
 }
 
-void summary()
+void summaryAdmin()
 {
-  title("SUMMARY", "");
-  cout << "Amount: "
-       << savings << " PHP\n"
-       << "-----------------------------------\n"
-       << "Enter 1 to go to menu: ";
-  cin >> option;
-  if (option == 1)
+  int x;
+  title("SUMMARY of which account?", "");
+  cout << "\n";
+  for (Account acc : dbAccounts)
   {
-    home();
+    cout << "1. " << acc.getFullName();
+  }
+
+  cout << "\n";
+  cin >> x;
+  summary(x);
+
+  system("pause");
+  homeAdmin();
+}
+
+void summary(int option)
+{
+  for (int i = 0; i < dbAccounts.size(); i++)
+  {
+    if (option - 1 == dbAccounts[i].getId())
+    {
+      title("SUMMARY", "");
+      cout << "Account Name: " << dbAccounts[i].getFullName()
+           << "\nAmount: " << dbAccounts[i].getAmount() << " PHP\n"
+           << std::endl;
+    }
   }
 }
 
@@ -138,9 +205,11 @@ void withdrawing()
 
 void depositing()
 {
+  double x;
   title("How much would you like to deposit?", "");
-  cin >> deposit;
-  savings = deposit;
+  cin >> x;
+  //undefined
+  //undefined
 }
 
 void other()
