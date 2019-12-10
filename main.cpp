@@ -5,6 +5,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <limits>  //gets cin size to handle bad input
+#include <iomanip> //removes scientific notation
 
 using std::cin;
 using std::cout;
@@ -13,23 +15,21 @@ using std::string;
 class Account
 {
   //private variables
-  string firstName, lastName, password;
-  double amount;
-  int id;
+  string firstName, lastName, password, fullName;
+  double amount = 0;
 
 public:
   //constructor (initializes account)
   Account(string fName,
           string lName,
           string xPass,
-          double xAmount,
-          int xId)
+          double xAmount)
       : firstName(fName),
         lastName(lName),
         password(xPass),
-        amount(xAmount),
-        id(xId)
+        amount(xAmount)
   {
+    fullName = firstName + " " + lastName;
   }
 
   std::string getFullName()
@@ -57,18 +57,12 @@ public:
   {
     amount -= yAmount;
   }
-  int getId()
-  {
-    return id;
-  }
 };
 
-int idIncrementer = 0;
-int option = 0;
-double savings = 0, withdraw = 0, deposit = 0;
+string currentAccount;
 
 void other();
-void depositing(), withdrawing();
+void depositing(string), withdrawing();
 void summaryAdmin(), summary(int);
 void title(std::string pTitle, std::string pOptions);
 void createAcc();
@@ -89,7 +83,7 @@ int main()
 
 void homeAdmin()
 {
-
+  int option;
   title("Welcome. Please select one of the following:",
         "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n5. Delete\n6. Switch to user");
   cout << "\n-----------------------------------\n\n";
@@ -100,7 +94,7 @@ void homeAdmin()
     summaryAdmin();
     break;
   case 2:
-    depositing();
+    depositing("admin");
     break;
   case 3:
     withdrawing();
@@ -135,9 +129,19 @@ void home()
 
 void homeUser()
 {
-  //undefined
-  //undefined
-  //undefined
+  int option;
+  title("Welcome. Please select one of the following:",
+        "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n5. Delete\n6. Switch to user");
+  cout << "\n-----------------------------------\n\n";
+  cin >> option;
+  switch (option)
+  {
+  case 1:
+    cout << "yolo";
+    break;
+  default:
+    break;
+  }
 }
 
 void createAcc() //done
@@ -148,25 +152,20 @@ void createAcc() //done
   cin >> firstName;
   cout << "Your last name: \n";
   cin >> lastName;
-  cout << "Initial amount: \n";
-  cin >> initialAmount;
+  do
+  {
+    if (initialAmount > 50000)
+      cout << "Please enter 50000 or less:\n";
+    else
+      cout << "Initial amount: \n";
+    cin >> initialAmount;
+  } while (initialAmount > 50000);
   cout << "Password: \n";
   cin >> password;
-  dbAccounts.push_back(Account(firstName, lastName, password, initialAmount, idIncrementer));
-
-  idIncrementer++;
+  dbAccounts.push_back(Account(firstName, lastName, password, initialAmount));
 }
 
-void newAccount()
-{
-  title("Enter details for new account.\n", "");
-  cout << "Account Name: "
-       //cin
-       << "Initial Amount: ";
-  //cin
-}
-
-void summaryAdmin()
+void summaryAdmin() //done
 {
   int x;
   title("SUMMARY of which account?", "");
@@ -178,24 +177,20 @@ void summaryAdmin()
 
   cout << "\n";
   cin >> x;
-  summary(x);
 
-  system("pause");
+  summary(x - 1);
   homeAdmin();
 }
 
-void summary(int option)
+void summary(int i) //done
 {
-  for (int i = 0; i < dbAccounts.size(); i++)
-  {
-    if (option - 1 == dbAccounts[i].getId())
-    {
-      title("SUMMARY", "");
-      cout << "Account Name: " << dbAccounts[i].getFullName()
-           << "\nAmount: " << dbAccounts[i].getAmount() << " PHP\n"
-           << std::endl;
-    }
-  }
+  title("SUMMARY", "");
+  cout << std::fixed << std::setprecision(0) //removes scientific notation
+       << "Account Name: " << dbAccounts[i].getFullName()
+       << "\nAmount: " << dbAccounts[i].getAmount() << " PHP\n"
+       << std::endl;
+
+  system("pause");
 }
 
 void withdrawing()
@@ -203,13 +198,16 @@ void withdrawing()
   title("How much would you like to withdraw?", "Amount: ");
 }
 
-void depositing()
+void depositing(string adminOrUser)
 {
   double x;
   title("How much would you like to deposit?", "");
   cin >> x;
-  //undefined
-  //undefined
+
+  if (adminOrUser == "admin")
+    homeAdmin();
+  else
+    homeUser();
 }
 
 void other()
@@ -235,6 +233,7 @@ void title(std::string pTitle, std::string pOptions)
        << "\n-----------------------------------\n"
        << pOptions;
 }
+
 /*
 void editAccount()
 {
@@ -246,3 +245,30 @@ void editAccount()
        << "3. Delete Account\n";
 }
 */
+
+bool isItAValidNumber(bool yesNo) //returns true if valid
+{
+  if (yesNo)
+  {
+    cin.clear(); //resets cin.fail() to false
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    /*
+      cin.ignore() clears the characters that would make 
+			cin.fail() true where the first argument indicates no
+			limit to the number of characters to ignore and the
+			second argument the character from which to stop ignoring
+      which is the character for enter.
+    */
+    return false;
+  }
+  else
+  {
+    /*
+      Discards extra input.
+      If user types in numbers then letters, the
+      letters and everything after will be discarded.
+    */
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    return true;
+  }
+}
