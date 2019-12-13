@@ -105,6 +105,7 @@ void home()
       cin.clear();
       cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
+    home();
   }
 }
 
@@ -160,6 +161,8 @@ void homeUser()
   }
   for (int i = 0; i < dbAccounts.size(); i++) //acc index finder
   {
+    if (currentAccount == "home")
+      home();
     if (currentAccount == dbAccounts[i].getFullName())
     {
       found = true;
@@ -182,7 +185,9 @@ void homeUser()
   }
   if (found == false)
   {
-    cout << "Account not found." << std::endl;
+    cout << "Account not found. Try again or "
+         << "type \"home\" to go home"
+         << std::endl;
     system("pause");
     homeUser();
   }
@@ -213,6 +218,8 @@ void createAcc() //done
       lastName,
       password,
       initialAmount));
+
+  homeAdmin();
 }
 
 void summaryAdmin() //done
@@ -220,9 +227,9 @@ void summaryAdmin() //done
   int x;
   title("SUMMARY of which account?", "");
   cout << "\n";
-  for (Account acc : dbAccounts)
+  for (int j = 0; j < dbAccounts.size(); j++)
   {
-    cout << "1. " << acc.getFullName();
+    cout << j + 1 << ". " << dbAccounts[j].getFullName() << "\n";
   }
 
   cout << "\n";
@@ -290,9 +297,9 @@ void depositing(int i, string adminOrUser)
   {
     title("Deposit to which account?", "");
     cout << "\n";
-    for (Account acc : dbAccounts) //display all accounts
+    for (int j = 0; j < dbAccounts.size(); j++) //display all accounts
     {
-      cout << "1. " << acc.getFullName();
+      cout << j + 1 << ". " << dbAccounts[j].getFullName() << "\n";
     }
 
     cout << "\n\n";
