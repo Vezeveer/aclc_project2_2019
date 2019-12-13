@@ -1,6 +1,7 @@
 //Description: This program will perform most of the
 //things that a normal bank account system would do
 //Title: Simple Account App
+//Programmers: Emmanuel Valdueza, Jake Ogsimer, Mark Perez
 
 #include <iostream>
 #include <string>
@@ -60,13 +61,14 @@ public:
 };
 
 void other();
-void depositing(string), withdrawing();
+void depositing(int, string), withdrawing(int, string);
 void summaryAdmin(), summary(int, string); //takes in index
 void title(std::string pTitle, std::string pOptions);
 void createAcc();
 void home(), homeUser(), homeAdmin();
 void deleteAcc();
 bool isItANum(bool yesNo);
+double getCheckAmount();
 
 std::vector<Account> dbAccounts; //will act as our database
 bool found;
@@ -110,7 +112,8 @@ void homeAdmin()
 {
   int option;
   title("Welcome. Please select one of\nthe following:",
-        "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n5. Delete\n6. Switch to user");
+        "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n");
+  cout << "5. Delete\n6. Switch to user";
   cout << "\n-----------------------------------\n\n";
   cin >> option;
   cin.ignore();
@@ -120,10 +123,10 @@ void homeAdmin()
     summaryAdmin();
     break;
   case 2:
-    depositing("admin");
+    depositing(0, "admin"); //0 will never be used
     break;
   case 3:
-    withdrawing();
+    withdrawing(0, "admin");
     break;
   case 4:
     createAcc();
@@ -155,7 +158,7 @@ void homeUser()
     title("Enter full name of account:", "");
     std::getline(cin, currentAccount);
   }
-  for (int i = 0; i < dbAccounts.size(); i++)
+  for (int i = 0; i < dbAccounts.size(); i++) //acc index finder
   {
     if (currentAccount == dbAccounts[i].getFullName())
     {
@@ -166,6 +169,10 @@ void homeUser()
       std::getline(cin, option);
       if (option == "1")
         summary(i, "user");
+      if (option == "2")
+        depositing(i, "user");
+      if (option == "3")
+        withdrawing(i, "user");
       if (option == "4")
       {
         found = false;
@@ -201,7 +208,11 @@ void createAcc() //done
   cout << "Password: \n";
   cin >> password;
   cin.ignore();
-  dbAccounts.push_back(Account(firstName, lastName, password, initialAmount));
+  dbAccounts.push_back(Account( //add account
+      firstName,
+      lastName,
+      password,
+      initialAmount));
 }
 
 void summaryAdmin() //done
@@ -236,35 +247,39 @@ void summary(int i, string adminOrUser) //done
     homeUser();
 }
 
-void withdrawing()
+void withdrawing(int i, string adminOrUser)
 {
   title("How much would you like to withdraw?", "Amount: ");
 }
 
-void depositing(string adminOrUser)
+void depositing(int i, string adminOrUser)
 {
-  int iAcc;
+  int iAdmin;
   double amount2Deposit;
 
-  title("Deposit to which account?", "");
-  cout << "\n";
-  for (Account acc : dbAccounts)
+  if (adminOrUser == "admin")
   {
-    cout << "1. " << acc.getFullName();
+    title("Deposit to which account?", "");
+    cout << "\n";
+    for (Account acc : dbAccounts) //display all accounts
+    {
+      cout << "1. " << acc.getFullName();
+    }
+
+    cout << "\n\n";
+    cin >> iAdmin; //pass index of acc in db
+    iAdmin -= 1;
+    i = iAdmin;
+    cin.ignore();
   }
 
-  cout << "\n\n";
-  cin >> iAcc; //pass index of acc in db
-  iAcc -= 1;
-  cin.ignore();
-
   title("How much would you like to deposit?", "");
-  cin >> amount2Deposit;
-  cin.ignore();
+  amount2Deposit = getCheckAmount();
 
-  dbAccounts[iAcc].depositAmount(amount2Deposit);
+  dbAccounts[i].depositAmount(amount2Deposit);
   cout << "Deposit success.\n";
-  cout << "Current Amount is now: " << dbAccounts[iAcc].getAmount() << " PHP\n\n";
+  cout << "Current Amount is now: "
+       << dbAccounts[i].getAmount() << " PHP\n\n";
   system("pause");
 
   if (adminOrUser == "admin") //return to home
@@ -285,7 +300,8 @@ void searchAcc()
 
 void deleteAcc()
 {
-  title("What account would you like to delete?", "1. placeholder\n1. placeholder\n");
+  title("What account would you like to delete?",
+        "1. placeholder\n1. placeholder\n");
   //array of accounts... or i dunno leme see
 }
 
@@ -308,6 +324,24 @@ void editAccount()
        << "3. Delete Account\n";
 }
 */
+
+double getCheckAmount() //checks if is a number
+{
+  double x;
+  do
+  {
+    if (cin.fail())
+    {
+      cout << "Invalid Input or Option.\n";
+      cin.clear(); //resets cin.fail() to false
+      cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+    cin >> x;
+  } while (cin.fail());
+
+  cin.ignore();
+  return x;
+}
 
 bool isItANum(bool yesNo) //returns true if valid
 {
