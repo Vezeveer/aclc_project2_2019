@@ -125,10 +125,13 @@ void homeAdmin()
     homeUser();
     break;
   default:
-    cout << "Invalid Input or Option.\n";
+    cout << "\nInvalid Input or Option.\n\n";
     system("pause");
-    cin.clear();
-    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    if (cin.fail())
+    {
+      cin.clear();
+      cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
     homeAdmin();
     break;
   }

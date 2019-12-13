@@ -3,6 +3,7 @@
     "*.js": "javascriptreact",
     "iostream": "cpp",
     "iomanip": "cpp",
-    "xiosbase": "cpp"
+    "xiosbase": "cpp",
+    "limits": "cpp"
   }
 }
