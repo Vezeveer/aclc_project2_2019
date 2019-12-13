@@ -249,7 +249,36 @@ void summary(int i, string adminOrUser) //done
 
 void withdrawing(int i, string adminOrUser)
 {
+  int iAdmin;
   title("How much would you like to withdraw?", "Amount: ");
+
+  if (adminOrUser == "user")
+    dbAccounts[i].withdrawAmount(getCheckAmount(i, "withdraw"));
+  cout << "Success.\n";
+  cout << "Current Amount: " << dbAccounts[i].getAmount() << " PHP\n\n";
+  system("pause");
+  homeUser();
+
+  if (adminOrUser == "admin")
+  {
+    title("Withdraw from which account?", "");
+    cout << "\n";
+    for (Account acc : dbAccounts) //display all accounts
+    {
+      cout << "1. " << acc.getFullName();
+    }
+
+    cout << "\n\n";
+    cin >> iAdmin; //pass index of acc in db
+    cin.ignore();
+    iAdmin -= 1;
+    i = iAdmin;
+    dbAccounts[i].withdrawAmount(getCheckAmount(i, "withdraw"));
+    cout << "Success.\n";
+    cout << "Current Amount: " << dbAccounts[i].getAmount() << " PHP\n\n";
+    system("pause");
+    homeAdmin();
+  }
 }
 
 void depositing(int i, string adminOrUser)
@@ -343,16 +372,22 @@ double getCheckAmount(int i, string depositOrWithdraw) //checks if is a number
     {
       if (depositOrWithdraw == "deposit")
       {
-        if (xCash > 50000 || xCash < 500)
-          cout << "Amount should be 500 - 50000\n";
+        if (xCash > 50000 || xCash < 500 && xCash > 0)
+        {
+          cout << "Amount should be 500 - 50000\n=>";
+          keepLooping = true;
+        }
         else
           keepLooping = false;
       }
       else if (depositOrWithdraw == "withdraw")
       {
-        if (xCash <= dbAccounts[i].getAmount())
+        if (xCash > dbAccounts[i].getAmount() && xCash > 0)
+        {
           cout << "Amount should be less than "
-               << dbAccounts[i].getAmount() << " PHP\n";
+               << dbAccounts[i].getAmount() << " PHP\n=>";
+          keepLooping = true;
+        }
         else
           keepLooping = false;
       }
