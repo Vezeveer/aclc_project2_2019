@@ -66,6 +66,7 @@ void title(std::string pTitle, std::string pOptions);
 void createAcc();
 void home(), homeUser(), homeAdmin();
 void deleteAcc();
+bool isItANum(bool yesNo);
 
 std::vector<Account> dbAccounts; //will act as our database
 bool found;
@@ -98,7 +99,7 @@ void home()
 void homeAdmin()
 {
   int option;
-  title("Welcome. Please select one of the following:",
+  title("Welcome. Please select one of\nthe following:",
         "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n5. Delete\n6. Switch to user");
   cout << "\n-----------------------------------\n\n";
   cin >> option;
@@ -124,7 +125,11 @@ void homeAdmin()
     homeUser();
     break;
   default:
-    home();
+    cout << "Invalid Input or Option.\n";
+    system("pause");
+    cin.clear();
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    homeAdmin();
     break;
   }
 }
@@ -142,7 +147,7 @@ void homeUser()
     if (currentAccount == dbAccounts[i].getFullName())
     {
       found = true;
-      title("Welcome, user. Please select one of the following:",
+      title("Welcome, user. Please select one of\nthe following:",
             "1. Summary\n2. Deposit\n3. Withdraw\n4. Switch to admin");
       cout << "\n-----------------------------------\n\n";
       std::getline(cin, option);
@@ -272,7 +277,7 @@ void editAccount()
 }
 */
 
-bool isItAValidNumber(bool yesNo) //returns true if valid
+bool isItANum(bool yesNo) //returns true if valid
 {
   if (yesNo)
   {
