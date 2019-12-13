@@ -13,6 +13,17 @@ using std::cin;
 using std::cout;
 using std::string;
 
+void other();
+void depositing(int, string), withdrawing(int, string);
+void summaryAdmin(), summary(int, string); //takes in index
+void title(std::string pTitle, std::string pOptions);
+void createAcc();
+void home(), homeUser(), homeAdmin();
+void deleteAcc();
+bool isItANum(bool yesNo);
+double getCheckAmount(int, string);
+void editAccount();
+
 class Account
 {
   //private variables
@@ -35,7 +46,6 @@ public:
 
   std::string getFullName()
   {
-    string fullName = firstName + " " + lastName;
     return fullName;
   }
   std::string getFirstName()
@@ -58,17 +68,16 @@ public:
   {
     amount -= yAmount;
   }
+  void changeName(int i1, string fName, string lName)
+  {
+    firstName = fName;
+    lastName = lName;
+    fullName = fName + " " + lName;
+    cout << "Success.\n";
+    system("pause");
+    summary(i1, "admin");
+  }
 };
-
-void other();
-void depositing(int, string), withdrawing(int, string);
-void summaryAdmin(), summary(int, string); //takes in index
-void title(std::string pTitle, std::string pOptions);
-void createAcc();
-void home(), homeUser(), homeAdmin();
-void deleteAcc();
-bool isItANum(bool yesNo);
-double getCheckAmount(int, string);
 
 std::vector<Account> dbAccounts; //will act as our database
 bool found;
@@ -114,7 +123,7 @@ void homeAdmin()
   int option;
   title("Welcome. Please select one of\nthe following:",
         "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n");
-  cout << "5. Delete\n6. Switch to user";
+  cout << "5. Delete\n6. Edit Account\n7. Switch to user";
   cout << "\n-----------------------------------\n\n";
   cin >> option;
   cin.ignore();
@@ -136,6 +145,9 @@ void homeAdmin()
     deleteAcc();
     break;
   case 6:
+    editAccount();
+    break;
+  case 7:
     homeUser();
     break;
   default:
@@ -349,17 +361,33 @@ void title(std::string pTitle, std::string pOptions)
        << pOptions;
 }
 
-/*
 void editAccount()
 {
-  system("cls");
-  cout << "What would you like to change?\n"
-       << "-----------------------------------\n"
-       << "1. Name\n"
-       << "2. Edit Account\n"
-       << "3. Delete Account\n";
+  int xIndex, xC;
+  string xfName, xlName;
+  title("Which account?", "");
+  for (int i = 0; i < dbAccounts.size(); i++)
+  {
+    cout << i + 1 << ". " << dbAccounts[i].getFullName() << "\n";
+  }
+  cin >> xIndex;
+  title("Change what?", "1. Name\n");
+  cin >> xC;
+  cin.ignore();
+  if (xC == 1)
+  {
+    cout << "Enter new first name: ";
+    cin >> xfName;
+    cin.ignore();
+    cout << "Enter new last name: ";
+    cin >> xlName;
+    cin.ignore();
+    //Error here...
+    dbAccounts[xIndex].changeName(xIndex, xfName, xlName);
+  }
+  cout << "Invalid Input.\n";
+  homeAdmin();
 }
-*/
 
 double getCheckAmount(int i, string depositOrWithdraw) //checks if is a number
 {
