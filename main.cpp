@@ -68,7 +68,7 @@ void createAcc();
 void home(), homeUser(), homeAdmin();
 void deleteAcc();
 bool isItANum(bool yesNo);
-double getCheckAmount();
+double getCheckAmount(int, string);
 
 std::vector<Account> dbAccounts; //will act as our database
 bool found;
@@ -274,7 +274,7 @@ void depositing(int i, string adminOrUser)
   }
 
   title("How much would you like to deposit?", "");
-  amount2Deposit = getCheckAmount();
+  amount2Deposit = getCheckAmount(i, adminOrUser);
 
   dbAccounts[i].depositAmount(amount2Deposit);
   cout << "Deposit success.\n";
@@ -325,23 +325,47 @@ void editAccount()
 }
 */
 
-double getCheckAmount() //checks if is a number
+double getCheckAmount(int i, string depositOrWithdraw) //checks if is a number
 {
-  double x;
+  double xCash;
+  bool keepLooping = true;
   do
   {
     if (cin.fail())
     {
-      cout << "Invalid Input or Option.\n";
+      cout << "Invalid Input or Amount.\n";
       cin.clear(); //resets cin.fail() to false
       cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
-    cin >> x;
-  } while (cin.fail());
+    cin >> xCash;
+    keepLooping = cin.fail();
+    if (cin.fail() == false)
+    {
+      if (depositOrWithdraw == "deposit")
+      {
+        if (xCash > 50000 || xCash < 500)
+          cout << "Amount should be 500 - 50000\n";
+        else
+          keepLooping = false;
+      }
+      else if (depositOrWithdraw == "withdraw")
+      {
+        if (xCash <= dbAccounts[i].getAmount())
+          cout << "Amount should be less than "
+               << dbAccounts[i].getAmount() << " PHP\n";
+        else
+          keepLooping = false;
+      }
+    }
+    else
+      keepLooping = cin.fail();
+  } while (keepLooping);
 
   cin.ignore();
-  return x;
+  return xCash;
 }
+
+//Used later
 
 bool isItANum(bool yesNo) //returns true if valid
 {
