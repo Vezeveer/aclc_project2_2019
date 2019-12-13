@@ -92,8 +92,18 @@ void home()
   cin.ignore();
   if (x == 1)
     homeUser();
-  else
+  else if (x == 2)
     homeAdmin();
+  else
+  {
+    cout << "\nInvalid Input or Option.\n\n";
+    system("pause");
+    if (cin.fail())
+    {
+      cin.clear();
+      cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+  }
 }
 
 void homeAdmin()
@@ -205,7 +215,7 @@ void summaryAdmin() //done
   }
 
   cout << "\n";
-  cin >> x;
+  cin >> x; //pass index of acc in db
   cin.ignore();
 
   summary(x - 1, "admin");
@@ -233,12 +243,31 @@ void withdrawing()
 
 void depositing(string adminOrUser)
 {
-  double x;
-  title("How much would you like to deposit?", "");
-  cin >> x;
+  int iAcc;
+  double amount2Deposit;
+
+  title("Deposit to which account?", "");
+  cout << "\n";
+  for (Account acc : dbAccounts)
+  {
+    cout << "1. " << acc.getFullName();
+  }
+
+  cout << "\n\n";
+  cin >> iAcc; //pass index of acc in db
+  iAcc -= 1;
   cin.ignore();
 
-  if (adminOrUser == "admin")
+  title("How much would you like to deposit?", "");
+  cin >> amount2Deposit;
+  cin.ignore();
+
+  dbAccounts[iAcc].depositAmount(amount2Deposit);
+  cout << "Deposit success.\n";
+  cout << "Current Amount is now: " << dbAccounts[iAcc].getAmount() << " PHP\n\n";
+  system("pause");
+
+  if (adminOrUser == "admin") //return to home
     homeAdmin();
   else
     homeUser();
