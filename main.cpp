@@ -27,11 +27,11 @@ void editAccount();
 class Account
 {
   //private variables
-  string firstName, lastName, password, fullName;
+  string firstName, lastName, password, fullName, fakeName = "";
   double amount = 0;
 
 public:
-  //constructor (initializes account)
+  //constructor (initializes an account)
   Account(string fName,
           string lName,
           string xPass,
@@ -68,18 +68,17 @@ public:
   {
     amount -= yAmount;
   }
-  void changeName(int i1, string fName, string lName)
-  {
-    firstName = fName;
-    lastName = lName;
-    fullName = fName + " " + lName;
-    cout << "Success.\n";
-    system("pause");
-    summary(i1, "admin");
-  }
+  void changeName(string, string);
 };
 
-std::vector<Account> dbAccounts; //will act as our database
+void Account::changeName(string xName, string yName)
+{
+  firstName = xName;
+  lastName = yName;
+  fullName = xName + " " + yName;
+}
+
+std::vector<Account> dbAccounts = {Account("James", "Bond", "007", 20000.0)}; //will act as our database
 bool found;
 string currentAccount;
 
@@ -256,8 +255,8 @@ void summary(int i, string adminOrUser) //done
   title("SUMMARY", "");
   cout << std::fixed << std::setprecision(0) //removes scientific notation
        << "Account Name: " << dbAccounts[i].getFullName()
-       << "\nAmount: " << dbAccounts[i].getAmount() << " PHP\n"
-       << std::endl;
+       << "\nAmount: " << dbAccounts[i].getAmount() << " PHP"
+       << "\n-----------------------------------\n";
 
   system("pause");
   if (adminOrUser == "admin")
@@ -314,7 +313,7 @@ void depositing(int i, string adminOrUser)
       cout << j + 1 << ". " << dbAccounts[j].getFullName() << "\n";
     }
 
-    cout << "\n\n";
+    cout << "\n-----------------------------------\n";
     cin >> iAdmin; //pass index of acc in db
     iAdmin -= 1;
     i = iAdmin;
@@ -363,27 +362,30 @@ void title(std::string pTitle, std::string pOptions)
 
 void editAccount()
 {
-  int xIndex, xC;
+  int xElement, xC, xIndex;
   string xfName, xlName;
   title("Which account?", "");
   for (int i = 0; i < dbAccounts.size(); i++)
   {
     cout << i + 1 << ". " << dbAccounts[i].getFullName() << "\n";
   }
-  cin >> xIndex;
+  cin >> xElement;
+  xIndex = xElement - 1;
+  cin.ignore();
   title("Change what?", "1. Name\n");
   cin >> xC;
   cin.ignore();
   if (xC == 1)
   {
     cout << "Enter new first name: ";
-    cin >> xfName;
-    cin.ignore();
+    getline(cin, xfName);
+    //cin.ignore();
     cout << "Enter new last name: ";
-    cin >> xlName;
-    cin.ignore();
+    getline(cin, xlName);
+    //cin.ignore();
     //Error here...
-    dbAccounts[xIndex].changeName(xIndex, xfName, xlName);
+    dbAccounts[xIndex].changeName(xfName, xlName);
+    summary(xIndex, "admin");
   }
   cout << "Invalid Input.\n";
   homeAdmin();
