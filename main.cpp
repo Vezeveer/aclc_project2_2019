@@ -22,10 +22,10 @@ void deleteAccount();
 bool isItANum(bool yesNo);
 double getCheckAmount(int, string, string);
 void editAccount();
-void displayAllAccounts();
-int checkChoice(string, string, bool);
+string displayAllAccounts();
+int checkChoice(string, string, int, bool);
 bool isNameValid(string);
-string firstLastName(string);
+string firstLastName(string, string);
 bool isPassInvalid(string);
 
 class Account
@@ -88,8 +88,8 @@ std::vector<Account> dbAccounts = {Account("James",
                                            "Bond",
                                            "007",
                                            20000.0)};
-bool found;
-string currentAccount;
+bool userFound;
+string userAccInput;
 
 int main()
 {
@@ -101,12 +101,13 @@ int main()
 
 void home()
 {
-  int x;
-  title("Select an option:",
-        "1. User\n2. Admin\n");
-  cout << "-----------------------------------\n>";
-  cin >> x;
-  cin.ignore();
+  int x, maxChoices = 2;
+  string leadTitle = "Select an option:",
+         optionsTitle = "1. User\n2. Admin";
+  title(leadTitle,
+        optionsTitle);
+  x = checkChoice(leadTitle, optionsTitle, maxChoices, false);
+
   if (x == 1)
     homeUser();
   else if (x == 2)
@@ -126,13 +127,14 @@ void home()
 
 void homeAdmin()
 {
-  int option;
-  title("Welcome. Please select one of\nthe following:",
-        "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n");
-  cout << "5. Delete\n6. Edit Account\n7. Switch to user";
-  cout << "\n-----------------------------------\n>";
-  cin >> option;
-  cin.ignore();
+  int option, maxChoices = 7;
+  string leadTitle = "Welcome. Please select one of\nthe following:",
+         optionsTitle = "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n"
+                        "5. Delete\n6. Edit Account\n7. Switch to user";
+
+  title(leadTitle, optionsTitle);
+  option = checkChoice(leadTitle, optionsTitle, maxChoices, false);
+
   switch (option)
   {
   case 1:
@@ -173,19 +175,17 @@ void homeUser()
 {
   string option;
 
-  if (!found)
+  if (!userFound)
   {
     title("Enter full name of your account:", ">");
-    std::getline(cin, currentAccount);
+    std::getline(cin, userAccInput);
   }
 
   for (int i = 0; i < dbAccounts.size(); i++) //acc index finder
   {
-    if (currentAccount == "home")
-      home();
-    if (currentAccount == dbAccounts[i].getFullName())
+    userFound = userAccInput == dbAccounts[i].getFullName();
+    if (userFound)
     {
-      found = true;
       title("Welcome, " + dbAccounts[i].getFullName() +
                 ".\nPlease select one of the following:",
             "1. Summary\n2. Deposit\n3. Withdraw\n4. Switch to admin");
@@ -199,15 +199,17 @@ void homeUser()
         withdrawing(i, "user");
       if (option == "4")
       {
-        found = false;
+        userFound = false;
         home();
       }
     }
+    if (userAccInput == "home")
+      home();
   }
 
-  if (found == false) //loop back if not found
+  if (userFound == false) //loop back if not userFound
   {
-    cout << "Account not found.\nTry again or "
+    cout << "Account not userFound.\nTry again or "
          << "type \"home\" to go home"
          << "\n\n";
     system("pause");
@@ -221,8 +223,8 @@ void createAccount() //done
   double initialAmount;
   bool invalidPassword = false;
 
-  firstName = firstLastName("first");
-  lastName = firstLastName("last");
+  firstName = firstLastName("first", "new");
+  lastName = firstLastName("last", "new");
 
   do
   {
@@ -269,20 +271,27 @@ bool isPassInvalid(string iPassword)
   return false;
 }
 
-string firstLastName(string fl)
+string firstLastName(string fl, string newOrEdit) //return name if valid
 {
   string iName;
   bool namePassed = true;
+
+  if (newOrEdit == "edit")
+    newOrEdit = "Editing Account.\nYour new " + fl + " name:";
+  else
+    newOrEdit = "Creating Account.\nYour " + fl + " name:";
+
   do
   {
     if (namePassed == false)
-      title("Create Account. Your " + fl + " name: ",
+      title(newOrEdit,
             "Invalid name.\n>");
     else
-      title("Create Account. Your " + fl + " name: ", ">");
+      title(newOrEdit, ">");
     std::getline(cin, iName);
     namePassed = isNameValid(iName);
   } while (namePassed == false);
+
   return iName;
 }
 
@@ -302,16 +311,11 @@ bool isNameValid(string chkName) //return true if valid
 
 void summaryAdmin() //done
 {
-  int x;
-  title("SUMMARY of which account?", "");
-  for (int j = 0; j < dbAccounts.size(); j++)
-  {
-    cout << j + 1 << ". " << dbAccounts[j].getFullName() << "\n";
-  }
-
-  cout << "-----------------------------------\n>";
-  cin >> x; //pass index of acc in db
-  cin.ignore();
+  int x, maxChoices = dbAccounts.size();
+  string optionsTitle = displayAllAccounts(),
+         leadTitle = "SUMMARY of which account?";
+  title(leadTitle, displayAllAccounts());
+  x = checkChoice(leadTitle, optionsTitle, maxChoices, false);
 
   summary(x - 1, "admin");
 }
@@ -325,6 +329,7 @@ void summary(int i, string adminOrUser) //done
        << "\n-----------------------------------\n";
 
   system("pause");
+
   if (adminOrUser == "admin")
     homeAdmin();
   else
@@ -348,12 +353,12 @@ void withdrawing(int i, string adminOrUser)
 
   if (adminOrUser == "admin")
   {
-    int iAdmin;
-    title(adminTitle, "");
-    displayAllAccounts();
-    cout << "-----------------------------------\n";
-    cout << ">";
-    iAdmin = checkChoice(adminTitle, "", true);
+    int iAdmin, maxChoices = dbAccounts.size();
+    title(adminTitle, displayAllAccounts());
+
+    //cout << "-----------------------------------\n";
+    //cout << ">";
+    iAdmin = checkChoice(adminTitle, "", maxChoices, true);
     iAdmin -= 1;
     i = iAdmin;
 
@@ -369,18 +374,18 @@ void withdrawing(int i, string adminOrUser)
 
 void depositing(int i, string adminOrUser) //done
 {
-  int iAdmin;
+  int iAdmin, maxChoices = dbAccounts.size();
   double amount2Deposit;
   string xTitle = "Specify amount to deposit between\n500-50000";
   string yTitle = "Deposit to which account?";
 
   if (adminOrUser == "admin")
   {
-    title(yTitle, "");
-    displayAllAccounts();
-    cout << "-----------------------------------\n";
-    cout << ">";
-    iAdmin = checkChoice(yTitle, "", true); //will be used as index
+    title(yTitle, displayAllAccounts());
+
+    //cout << "-----------------------------------\n";
+    //cout << ">";
+    iAdmin = checkChoice(yTitle, "", maxChoices, true); //will be used as index
     iAdmin -= 1;
     i = iAdmin;
   }
@@ -401,7 +406,8 @@ void depositing(int i, string adminOrUser) //done
     homeUser();
 }
 
-int checkChoice(string xTitle, string sTitle, bool xDisplayAll)
+//Asks for a number. Returns number if valid
+int checkChoice(string leadTitle, string optionsTitle, int maxChoices, bool xDisplayAll)
 {
   int xChoice;
   bool invalidPassword = true;
@@ -410,29 +416,36 @@ int checkChoice(string xTitle, string sTitle, bool xDisplayAll)
     cin >> xChoice;
     if (cin.fail()) //cin.fail() will return true if invalid
     {
-      title(xTitle, sTitle);
+      title(leadTitle, optionsTitle);
       if (xDisplayAll)
-        displayAllAccounts();
-      cout << "-----------------------------------\n";
+        cout << displayAllAccounts();
+
       cout << "Invalid Input\n>";
       invalidPassword = true;
       cin.clear(); //resets cin.fail() to false
       cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
+    else if (xChoice > maxChoices)
+      invalidPassword = true;
     else
       invalidPassword = false;
   }
-  //cout << "Reached here: ";
-  //cin.ignore();
   return xChoice;
 }
 
-void displayAllAccounts()
+string displayAllAccounts()
 {
+  string aContainer = "", lastLine = "\n";
   for (int j = 0; j < dbAccounts.size(); j++)
   {
-    cout << j + 1 << ". " << dbAccounts[j].getFullName() << "\n";
+    if (j == (dbAccounts.size() - 1))
+      lastLine = "";
+    //cout << j + 1 << ". " << dbAccounts[j].getFullName() << "\n";
+    aContainer.append(std::to_string(j + 1) + ". " +
+                      dbAccounts[j].getFullName() +
+                      lastLine);
   }
+  return aContainer;
 }
 
 void searchAcc()
@@ -446,38 +459,39 @@ void deleteAccount()
   //array of accounts... or i dunno leme see
 }
 
-void title(std::string pTitle, std::string pOptions)
+void title(std::string leadTitle, std::string optionsTitle)
 {
   system("cls");
-  cout << pTitle
+  cout << leadTitle
        << "\n-----------------------------------\n"
-       << pOptions;
+       << optionsTitle
+       << "\n-----------------------------------\n>";
 }
 
 void editAccount()
 {
-  int xElement, xC, xIndex;
+  int dbElement, xC, xIndex, maxChoices = dbAccounts.size();
   string xfName, xlName;
-  title("Which account?", "");
+
+  title("Which account?", displayAllAccounts());
   for (int i = 0; i < dbAccounts.size(); i++)
   {
     cout << i + 1 << ". " << dbAccounts[i].getFullName() << "\n";
   }
-  cin >> xElement;
-  xIndex = xElement - 1;
-  cin.ignore();
+  dbElement = checkChoice("Which account?", "", maxChoices, true);
+  xIndex = dbElement - 1;
+
   title("Change what?", "1. Name\n");
-  cin >> xC;
+  cout << "-----------------------------------\n>";
+  xC = checkChoice("Change what?", "1. Name\n", 1, false);
   cin.ignore();
   if (xC == 1)
   {
-    cout << "Enter new first name: ";
-    getline(cin, xfName);
-    //cin.ignore();
-    cout << "Enter new last name: ";
-    getline(cin, xlName);
-    //cin.ignore();
-    //Error here...
+    title("Enter new first name: ", ">");
+    xfName = firstLastName("first", "edit");
+    title("Enter new last name: ", ">");
+    xlName = firstLastName("last", "edit");
+
     dbAccounts[xIndex].changeName(xfName, xlName);
     summary(xIndex, "admin");
   }
