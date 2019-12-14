@@ -70,9 +70,10 @@ public:
   {
     amount -= yAmount;
   }
-  void changeName(string, string);
+  void changeName(string, string); //declared
 };
 
+//member function defined outside the class
 void Account::changeName(string xName, string yName)
 {
   firstName = xName;
@@ -125,7 +126,7 @@ void homeAdmin()
   title("Welcome. Please select one of\nthe following:",
         "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n");
   cout << "5. Delete\n6. Edit Account\n7. Switch to user";
-  cout << "\n-----------------------------------\n\n";
+  cout << "\n-----------------------------------\n>";
   cin >> option;
   cin.ignore();
   switch (option)
@@ -268,13 +269,13 @@ void summary(int i, string adminOrUser) //done
 
 void withdrawing(int i, string adminOrUser)
 {
-  int iAdmin;
-  string xTitle = "How much would you like to withdraw?";
-  title(xTitle, "Amount: ");
+  string adminTitle = "Withdraw from which account?";
+  string askTitle = "How much would you like to withdraw?";
 
   if (adminOrUser == "user")
   {
-    dbAccounts[i].withdrawAmount(getCheckAmount(i, "withdraw", xTitle));
+    title(askTitle, "Amount: ");
+    dbAccounts[i].withdrawAmount(getCheckAmount(i, "withdraw", askTitle));
     cout << "Success.\n";
     cout << "Current Amount: " << dbAccounts[i].getAmount() << " PHP\n\n";
     system("pause");
@@ -283,20 +284,17 @@ void withdrawing(int i, string adminOrUser)
 
   if (adminOrUser == "admin")
   {
-    string xTitle = "Withdraw from which account?";
-    title(xTitle, "");
-    cout << "\n";
-    for (Account acc : dbAccounts) //display all accounts
-    {
-      cout << "1. " << acc.getFullName();
-    }
-
-    cout << "\n\n";
-    cin >> iAdmin; //pass index of acc in db
-    cin.ignore();
+    int iAdmin;
+    title(adminTitle, "");
+    displayAllAccounts();
+    cout << "-----------------------------------\n";
+    cout << ">";
+    iAdmin = checkChoice(adminTitle, "", true);
     iAdmin -= 1;
     i = iAdmin;
-    dbAccounts[i].withdrawAmount(getCheckAmount(i, "withdraw", xTitle));
+
+    title(askTitle, "");
+    dbAccounts[i].withdrawAmount(getCheckAmount(i, "withdraw", askTitle));
     cout << "Success.\n";
     cout << "Current Amount: " << dbAccounts[i].getAmount() << " PHP\n\n";
     system("pause");
@@ -304,11 +302,11 @@ void withdrawing(int i, string adminOrUser)
   }
 }
 
-void depositing(int i, string adminOrUser)
+void depositing(int i, string adminOrUser) //done
 {
   int iAdmin;
   double amount2Deposit;
-  string xTitle = "Specify amount to deposit?";
+  string xTitle = "Specify amount to deposit between\n500-50000";
   string yTitle = "Deposit to which account?";
 
   if (adminOrUser == "admin")
@@ -323,7 +321,8 @@ void depositing(int i, string adminOrUser)
   }
 
   title(xTitle, "");
-  amount2Deposit = getCheckAmount(i, adminOrUser, xTitle);
+  cout << ">";
+  amount2Deposit = getCheckAmount(i, "deposit", xTitle);
 
   dbAccounts[i].depositAmount(amount2Deposit);
   cout << "Deposit success.\n";
@@ -337,7 +336,7 @@ void depositing(int i, string adminOrUser)
     homeUser();
 }
 
-int checkChoice(string xTitle, string xSelect, bool xDisplayAll)
+int checkChoice(string xTitle, string sTitle, bool xDisplayAll)
 {
   int xChoice;
   bool keepLooping = true;
@@ -346,7 +345,7 @@ int checkChoice(string xTitle, string xSelect, bool xDisplayAll)
     cin >> xChoice;
     if (cin.fail()) //cin.fail() will return true if invalid
     {
-      title(xTitle, xSelect);
+      title(xTitle, sTitle);
       if (xDisplayAll)
         displayAllAccounts();
       cout << "-----------------------------------\n";
@@ -358,8 +357,8 @@ int checkChoice(string xTitle, string xSelect, bool xDisplayAll)
     else
       keepLooping = false;
   }
-  cout << "Reached here: ";
-  cin.ignore();
+  //cout << "Reached here: ";
+  //cin.ignore();
   return xChoice;
 }
 
@@ -427,16 +426,16 @@ void editAccount()
   homeAdmin();
 }
 
-double getCheckAmount(int i, string depositOrWithdraw, string xTitle) //checks if is a number
+double getCheckAmount(int i, string depositOrWithdraw, string askTitle) //checks if is a number
 {
   double xCash;
   bool keepLooping = true;
+  double balance = dbAccounts[i].getAmount();
   do
   {
     if (cin.fail())
     {
-      title(xTitle, "");
-      cout << "Invalid Input or Amount.\n";
+      title("Invalid amount.\nAmount should be 500 - 50000", ">");
       cin.clear(); //resets cin.fail() to false
       cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
@@ -446,9 +445,9 @@ double getCheckAmount(int i, string depositOrWithdraw, string xTitle) //checks i
     {
       if (depositOrWithdraw == "deposit")
       {
-        if (xCash > 50000 || xCash < 500 && xCash > 0)
+        if (xCash > 50000 || xCash < 500)
         {
-          cout << "Amount should be 500 - 50000\n=>";
+          title("Invalid amount.\nAmount should be 500 - 50000", ">");
           keepLooping = true;
         }
         else
@@ -456,10 +455,12 @@ double getCheckAmount(int i, string depositOrWithdraw, string xTitle) //checks i
       }
       else if (depositOrWithdraw == "withdraw")
       {
-        if (xCash > dbAccounts[i].getAmount() && xCash > 0)
+        if (xCash > balance && xCash > 0 || xCash <= 0)
         {
-          cout << "Amount should be less than "
-               << dbAccounts[i].getAmount() << " PHP\n=>";
+          system("cls");
+          cout << "Invalid amount.\nMaximum amount to draw: "
+               << balance << " PHP\n"
+               << "-----------------------------------\n>";
           keepLooping = true;
         }
         else
