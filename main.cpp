@@ -20,10 +20,10 @@ void createAccount();
 void home(), homeUser(), homeAdmin();
 void deleteAccount();
 bool isItANum(bool yesNo);
-double getCheckAmount(int, string, string);
+double getCheckAmount(int, string, string, string);
 void editAccount();
 string displayAllAccounts();
-int checkChoice(string, string, int, bool);
+int checkChoice(string, string, int);
 bool isNameValid(string);
 string firstLastName(string, string);
 bool isPassInvalid(string);
@@ -106,7 +106,7 @@ void home()
          optionsTitle = "1. User\n2. Admin";
   title(leadTitle,
         optionsTitle);
-  x = checkChoice(leadTitle, optionsTitle, maxChoices, false);
+  x = checkChoice(leadTitle, optionsTitle, maxChoices);
 
   if (x == 1)
     homeUser();
@@ -119,7 +119,10 @@ void home()
     if (cin.fail())
     {
       cin.clear();
-      cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+      cin.ignore(std::
+                     numeric_limits<std::streamsize>::
+                         max(),
+                 '\n');
     }
     home();
   }
@@ -128,12 +131,15 @@ void home()
 void homeAdmin()
 {
   int option, maxChoices = 7;
-  string leadTitle = "Welcome. Please select one of\nthe following:",
-         optionsTitle = "1. Summary\n2. Deposit\n3. Withdraw\n4. Create\n"
-                        "5. Delete\n6. Edit Account\n7. Switch to user";
+  string leadTitle = "Welcome. Please select one"
+                     " of\nthe following:",
+         optionsTitle = "1. Summary\n2. Deposit"
+                        "\n3. Withdraw\n4. Create\n"
+                        "5. Delete\n6. Edit Account"
+                        "\n7. Switch to user";
 
   title(leadTitle, optionsTitle);
-  option = checkChoice(leadTitle, optionsTitle, maxChoices, false);
+  option = checkChoice(leadTitle, optionsTitle, maxChoices);
 
   switch (option)
   {
@@ -315,7 +321,7 @@ void summaryAdmin() //done
   string optionsTitle = displayAllAccounts(),
          leadTitle = "SUMMARY of which account?";
   title(leadTitle, displayAllAccounts());
-  x = checkChoice(leadTitle, optionsTitle, maxChoices, false);
+  x = checkChoice(leadTitle, optionsTitle, maxChoices);
 
   summary(x - 1, "admin");
 }
@@ -343,35 +349,97 @@ void summary(int i, string adminOrUser) //done
 
 void withdrawing(int i, string adminOrUser)
 {
-  string adminTitle = "Withdraw from which account?";
-  string askTitle = "How much would you like to withdraw?";
+  bool keepLooping = true;
+  double withDrawAmount = 0;
+  string leadTitle = "WITHDRAWING";
+  string adminTitle = "\nWithdraw from which account?";
+  string askTitle = "\nHow much would you like to withdraw?";
+  string optionsTitle = "1. 500\n2. 1500"
+                        "\n3. 3000\n4. 5000\n5. Custom";
 
   if (adminOrUser == "user")
   {
-    title(askTitle, "Amount: ");
-    dbAccounts[i].withdrawAmount(getCheckAmount(i, "withdraw", askTitle));
+    title(leadTitle, askTitle);
+    dbAccounts[i].withdrawAmount(getCheckAmount(i,
+                                                "withdraw",
+                                                leadTitle,
+                                                optionsTitle));
     cout << "Success.\n";
-    cout << "Current Amount: " << dbAccounts[i].getAmount() << " PHP\n\n";
+    cout << "Current Amount: "
+         << dbAccounts[i].getAmount()
+         << " PHP\n\n";
+
     system("pause");
     homeUser();
   }
 
   if (adminOrUser == "admin")
   {
-    int iAdmin, maxChoices = dbAccounts.size();
-    title(adminTitle, displayAllAccounts());
+    int iAdmin,
+        maxAccChoices = dbAccounts.size(),
+        maxDrawChoices = 5;
 
-    //cout << "-----------------------------------\n";
-    //cout << ">";
-    iAdmin = checkChoice(adminTitle, "", maxChoices, true);
+    //Ask account
+    title(leadTitle + adminTitle, displayAllAccounts());
+    iAdmin = checkChoice(leadTitle + adminTitle,
+                         displayAllAccounts(),
+                         maxAccChoices);
     iAdmin -= 1;
     i = iAdmin;
 
-    title(askTitle, "");
-    cout << ">";
-    dbAccounts[i].withdrawAmount(getCheckAmount(i, "withdraw", askTitle));
-    cout << "Success.\n";
-    cout << "Current Amount: " << dbAccounts[i].getAmount() << " PHP\n\n";
+    //Ask Preset Amount
+    do
+    {
+      title(leadTitle + askTitle, optionsTitle);
+      int choice = checkChoice(leadTitle + adminTitle,
+                               optionsTitle,
+                               maxDrawChoices);
+      switch (choice)
+      {
+      case 1:
+        withDrawAmount = 500;
+        break;
+      case 2:
+        withDrawAmount = 1500;
+        break;
+      case 3:
+        withDrawAmount = 3000;
+        break;
+      case 4:
+        withDrawAmount = 5000;
+        break;
+      case 5:
+        //Ask Custom Amount
+        dbAccounts[i].withdrawAmount(getCheckAmount(i,
+                                                    "withdraw",
+                                                    leadTitle,
+                                                    optionsTitle));
+        break;
+      default:
+        break;
+      }
+
+      if (withDrawAmount <= dbAccounts[i].getAmount())
+      {
+        dbAccounts[i].withdrawAmount(withDrawAmount);
+        keepLooping = false;
+      }
+      else
+        keepLooping = true;
+    } while (keepLooping);
+
+    //convert doubles to strings
+    string crAmount = std::to_string(dbAccounts[i].getAmount());
+    crAmount.erase(crAmount.size() - 4, 4);
+    string strAmount = std::to_string(withDrawAmount);
+    strAmount.erase(strAmount.size() - 4, 4);
+
+    title(leadTitle, "Success.\n"
+                     "Amount Drawn: " +
+                         strAmount +
+                         "\nCurrent Balance: " +
+                         crAmount + " PHP");
+
     system("pause");
     homeAdmin();
   }
@@ -381,28 +449,41 @@ void depositing(int i, string adminOrUser) //done
 {
   int iAdmin, maxChoices = dbAccounts.size();
   double amount2Deposit;
-  string xTitle = "Specify amount to deposit between\n500-50000";
-  string yTitle = "Deposit to which account?";
+  string leadTitle = "DEPOSITING";
+  string specifyOptionsTitle = "Specify amount"
+                               " to deposit between"
+                               "\n500-50000";
+  string askAccTitle = "Deposit to which account?";
+  string optionsTitle = "...none for now";
 
   if (adminOrUser == "admin")
   {
-    title(yTitle, displayAllAccounts());
+    title(askAccTitle, displayAllAccounts());
 
-    //cout << "-----------------------------------\n";
-    //cout << ">";
-    iAdmin = checkChoice(yTitle, "", maxChoices, true); //will be used as index
+    iAdmin = checkChoice(askAccTitle, "", maxChoices);
     iAdmin -= 1;
     i = iAdmin;
   }
 
-  title(xTitle, "");
-  cout << ">";
-  amount2Deposit = getCheckAmount(i, "deposit", xTitle);
+  title(leadTitle, specifyOptionsTitle);
+  amount2Deposit = getCheckAmount(i,
+                                  "deposit",
+                                  leadTitle,
+                                  optionsTitle);
 
   dbAccounts[i].depositAmount(amount2Deposit);
-  cout << "Deposit success.\n";
-  cout << "Current Amount is now: "
-       << dbAccounts[i].getAmount() << " PHP\n\n";
+
+  string strDeposit = std::to_string(amount2Deposit);
+  strDeposit.erase(strDeposit.size() - 4, 4);
+  string strBalance = std::to_string(dbAccounts[i].getAmount());
+  strBalance.erase(strBalance.size() - 4, 4);
+
+  title(leadTitle, "Deposit Success.\n"
+                   "Amount Deposited: " +
+                       strDeposit +
+                       "\nCurrent Balance: " +
+                       strBalance + " PHP");
+
   system("pause");
 
   if (adminOrUser == "admin") //return to home
@@ -412,30 +493,36 @@ void depositing(int i, string adminOrUser) //done
 }
 
 //Asks for a number. Returns number if valid
-int checkChoice(string leadTitle, string optionsTitle, int maxChoices, bool xDisplayAll)
+int checkChoice(string leadTitle,
+                string optionsTitle,
+                int maxChoices)
 {
-  int xChoice;
-  bool invalidPassword = true;
-  while (invalidPassword)
+  int inputChoice;
+  bool invalidChoice = true;
+
+  while (invalidChoice)
   {
-    cin >> xChoice;
-    if (cin.fail()) //cin.fail() will return true if invalid
+    cin >> inputChoice;
+    if (cin.fail() ||
+        inputChoice >
+            maxChoices ||
+        inputChoice == 0) //goes thru if input is invalid
     {
       title(leadTitle, optionsTitle);
-      if (xDisplayAll)
-        cout << displayAllAccounts();
 
       cout << "Invalid Input\n>";
-      invalidPassword = true;
+      invalidChoice = true;
       cin.clear(); //resets cin.fail() to false
-      cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+      cin.ignore(std::
+                     numeric_limits<std::streamsize>::
+                         max(),
+                 '\n'); //erase input characters
     }
-    else if (xChoice > maxChoices)
-      invalidPassword = true;
     else
-      invalidPassword = false;
+      invalidChoice = false; //else exit loop & return input
   }
-  return xChoice;
+
+  return inputChoice;
 }
 
 string displayAllAccounts()
@@ -482,12 +569,12 @@ void editAccount()
   {
     cout << i + 1 << ". " << dbAccounts[i].getFullName() << "\n";
   }
-  dbElement = checkChoice("Which account?", "", maxChoices, true);
+  dbElement = checkChoice("Which account?", "", maxChoices);
   xIndex = dbElement - 1;
 
   title("Change what?", "1. Name\n");
   cout << "-----------------------------------\n>";
-  xC = checkChoice("Change what?", "1. Name\n", 1, false);
+  xC = checkChoice("Change what?", "1. Name\n", 1);
   cin.ignore();
   if (xC == 1)
   {
@@ -503,50 +590,73 @@ void editAccount()
   homeAdmin();
 }
 
-double getCheckAmount(int i, string depositOrWithdraw, string askTitle)
+//returns amount if valid
+double getCheckAmount(int i,
+                      string depositOrWithdraw,
+                      string leadTitle,
+                      string optionsTitle)
 {
-  double xCash;
-  bool invalidPassword = true;
   double balance = dbAccounts[i].getAmount();
+  //remove scientific notation
+  string strBalance = std::to_string(balance);
+  strBalance.erase(strBalance.size() - 4, 4);
+  double xCash;
+  bool invalidInput = true;
+
   do
   {
-    if (cin.fail())
+    if (cin.fail()) //if input are letters
     {
-      title("Invalid amount.\nAmount should be 500 - 50000", ">");
+      title(leadTitle,
+            "Invalid amount."
+            "\nAmount should be 500 - 50000");
       cin.clear(); //resets cin.fail() to false
-      cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+      cin.ignore(
+          std::numeric_limits<std::streamsize>::max(),
+          '\n');
     }
-    cin >> xCash;
-    invalidPassword = cin.fail();
+
+    title(leadTitle + "\nEnter the amount to " +
+              depositOrWithdraw,
+          "Current Balance: " + strBalance);
+    cin >> xCash; //Actual Input
+    invalidInput = cin.fail();
+
     if (cin.fail() == false)
     {
+      //DEPOSIT ERROR
       if (depositOrWithdraw == "deposit")
       {
         if (xCash > 50000 || xCash < 500)
         {
-          title("Invalid amount.\nAmount should be 500 - 50000", ">");
-          invalidPassword = true;
+          title(leadTitle,
+                "Invalid amount."
+                "\nAmount should be 500 - 50000");
+          system("pause");
+          invalidInput = true;
         }
         else
-          invalidPassword = false;
+          invalidInput = false;
       }
+      //WITHDRAW ERROR
       else if (depositOrWithdraw == "withdraw")
       {
         if (xCash > balance && xCash > 0 || xCash <= 0)
         {
-          system("cls");
-          cout << "Invalid amount.\nMaximum amount to draw: "
-               << balance << " PHP\n"
-               << "-----------------------------------\n>";
-          invalidPassword = true;
+          title(leadTitle,
+                "Invalid amount."
+                "\nMaximum to draw: " +
+                    strBalance +
+                    " PHP");
+          invalidInput = true;
         }
         else
-          invalidPassword = false;
+          invalidInput = false;
       }
     }
     else
-      invalidPassword = cin.fail();
-  } while (invalidPassword);
+      invalidInput = cin.fail();
+  } while (invalidInput);
 
   cin.ignore();
   return xCash;
