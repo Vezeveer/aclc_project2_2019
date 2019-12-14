@@ -88,7 +88,7 @@ std::vector<Account> dbAccounts = {Account("James",
                                            "Bond",
                                            "007",
                                            20000.0)};
-bool userFound;
+bool userFound = false;
 string userAccInput;
 
 int main()
@@ -108,6 +108,7 @@ void home()
         optionsTitle);
   x = checkChoice(leadTitle, optionsTitle, maxChoices);
 
+  cin.ignore();
   if (x == 1)
     homeUser();
   else if (x == 2)
@@ -162,6 +163,7 @@ void homeAdmin()
     editAccount();
     break;
   case 7:
+    cin.ignore();
     homeUser();
     break;
   default:
@@ -183,7 +185,7 @@ void homeUser()
 
   if (!userFound)
   {
-    title("Enter full name of your account:", ">");
+    title("USER ACCOUNT LOGIN", "Enter full name of your account");
     std::getline(cin, userAccInput);
   }
 
@@ -195,7 +197,6 @@ void homeUser()
       title("Welcome, " + dbAccounts[i].getFullName() +
                 ".\nPlease select one of the following:",
             "1. Summary\n2. Deposit\n3. Withdraw\n4. Switch to admin");
-      cout << "\n-----------------------------------\n>";
       std::getline(cin, option);
       if (option == "1")
         summary(i, "user");
@@ -215,9 +216,9 @@ void homeUser()
 
   if (userFound == false) //loop back if not userFound
   {
-    cout << "Account not userFound.\nTry again or "
-         << "type \"home\" to go home"
-         << "\n\n";
+    title("USER ACCOUNT LOGIN",
+          "Account not found."
+          "\nTry again or type \"home\" to go back");
     system("pause");
     homeUser();
   }
