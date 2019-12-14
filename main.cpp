@@ -26,6 +26,7 @@ void displayAllAccounts();
 int checkChoice(string, string, bool);
 bool isNameValid(string);
 string firstLastName(string);
+bool isPassInvalid(string);
 
 class Account
 {
@@ -92,8 +93,6 @@ string currentAccount;
 
 int main()
 {
-  createAccount();
-
   home();
 
   system("pause");
@@ -105,7 +104,7 @@ void home()
   int x;
   title("Select an option:",
         "1. User\n2. Admin\n");
-  cout << "\n-----------------------------------\n\n";
+  cout << "-----------------------------------\n>";
   cin >> x;
   cin.ignore();
   if (x == 1)
@@ -173,11 +172,13 @@ void homeAdmin()
 void homeUser()
 {
   string option;
+
   if (!found)
   {
-    title("Enter full name of account:", "");
+    title("Enter full name of your account:", ">");
     std::getline(cin, currentAccount);
   }
+
   for (int i = 0; i < dbAccounts.size(); i++) //acc index finder
   {
     if (currentAccount == "home")
@@ -185,9 +186,10 @@ void homeUser()
     if (currentAccount == dbAccounts[i].getFullName())
     {
       found = true;
-      title("Welcome, user. Please select one of\nthe following:",
+      title("Welcome, " + dbAccounts[i].getFullName() +
+                ".\nPlease select one of the following:",
             "1. Summary\n2. Deposit\n3. Withdraw\n4. Switch to admin");
-      cout << "\n-----------------------------------\n\n";
+      cout << "\n-----------------------------------\n>";
       std::getline(cin, option);
       if (option == "1")
         summary(i, "user");
@@ -202,11 +204,12 @@ void homeUser()
       }
     }
   }
-  if (found == false)
+
+  if (found == false) //loop back if not found
   {
-    cout << "Account not found. Try again or "
+    cout << "Account not found.\nTry again or "
          << "type \"home\" to go home"
-         << std::endl;
+         << "\n\n";
     system("pause");
     homeUser();
   }
@@ -216,6 +219,7 @@ void createAccount() //done
 {
   string firstName, lastName, password;
   double initialAmount;
+  bool invalidPassword = false;
 
   firstName = firstLastName("first");
   lastName = firstLastName("last");
@@ -225,13 +229,27 @@ void createAccount() //done
     if (initialAmount > 50000)
       cout << "Please enter 50000 or less:\n";
     else
-      cout << "Initial amount: \n";
+      title("Initial deposit: ", ">");
     cin >> initialAmount;
-    cin.ignore();
+    if (cin.fail())
+    {
+      cin.clear();
+      cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+    else
+      cin.ignore();
   } while (initialAmount > 50000);
-  cout << "Password: \n";
-  cin >> password;
-  cin.ignore();
+
+  do
+  {
+    if (invalidPassword)
+      title("Enter password: ", "Invalid Password.\n>");
+    else
+      title("Enter password: ", ">");
+    getline(cin, password);
+    invalidPassword = isPassInvalid(password);
+  } while (invalidPassword);
+
   dbAccounts.push_back(Account( //add account
       firstName,
       lastName,
@@ -239,6 +257,16 @@ void createAccount() //done
       initialAmount));
 
   homeAdmin();
+}
+
+bool isPassInvalid(string iPassword)
+{
+  for (int i = 0; i < iPassword.size(); i++)
+  {
+    if (isspace(iPassword[i])) //check for spaces
+      return true;
+  }
+  return false;
 }
 
 string firstLastName(string fl)
@@ -281,7 +309,7 @@ void summaryAdmin() //done
     cout << j + 1 << ". " << dbAccounts[j].getFullName() << "\n";
   }
 
-  cout << "-----------------------------------\n";
+  cout << "-----------------------------------\n>";
   cin >> x; //pass index of acc in db
   cin.ignore();
 
@@ -330,6 +358,7 @@ void withdrawing(int i, string adminOrUser)
     i = iAdmin;
 
     title(askTitle, "");
+    cout << ">";
     dbAccounts[i].withdrawAmount(getCheckAmount(i, "withdraw", askTitle));
     cout << "Success.\n";
     cout << "Current Amount: " << dbAccounts[i].getAmount() << " PHP\n\n";
@@ -375,8 +404,8 @@ void depositing(int i, string adminOrUser) //done
 int checkChoice(string xTitle, string sTitle, bool xDisplayAll)
 {
   int xChoice;
-  bool keepLooping = true;
-  while (keepLooping)
+  bool invalidPassword = true;
+  while (invalidPassword)
   {
     cin >> xChoice;
     if (cin.fail()) //cin.fail() will return true if invalid
@@ -386,12 +415,12 @@ int checkChoice(string xTitle, string sTitle, bool xDisplayAll)
         displayAllAccounts();
       cout << "-----------------------------------\n";
       cout << "Invalid Input\n>";
-      keepLooping = true;
+      invalidPassword = true;
       cin.clear(); //resets cin.fail() to false
       cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
     else
-      keepLooping = false;
+      invalidPassword = false;
   }
   //cout << "Reached here: ";
   //cin.ignore();
@@ -459,7 +488,7 @@ void editAccount()
 double getCheckAmount(int i, string depositOrWithdraw, string askTitle)
 {
   double xCash;
-  bool keepLooping = true;
+  bool invalidPassword = true;
   double balance = dbAccounts[i].getAmount();
   do
   {
@@ -470,7 +499,7 @@ double getCheckAmount(int i, string depositOrWithdraw, string askTitle)
       cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
     cin >> xCash;
-    keepLooping = cin.fail();
+    invalidPassword = cin.fail();
     if (cin.fail() == false)
     {
       if (depositOrWithdraw == "deposit")
@@ -478,10 +507,10 @@ double getCheckAmount(int i, string depositOrWithdraw, string askTitle)
         if (xCash > 50000 || xCash < 500)
         {
           title("Invalid amount.\nAmount should be 500 - 50000", ">");
-          keepLooping = true;
+          invalidPassword = true;
         }
         else
-          keepLooping = false;
+          invalidPassword = false;
       }
       else if (depositOrWithdraw == "withdraw")
       {
@@ -491,15 +520,15 @@ double getCheckAmount(int i, string depositOrWithdraw, string askTitle)
           cout << "Invalid amount.\nMaximum amount to draw: "
                << balance << " PHP\n"
                << "-----------------------------------\n>";
-          keepLooping = true;
+          invalidPassword = true;
         }
         else
-          keepLooping = false;
+          invalidPassword = false;
       }
     }
     else
-      keepLooping = cin.fail();
-  } while (keepLooping);
+      invalidPassword = cin.fail();
+  } while (invalidPassword);
 
   cin.ignore();
   return xCash;
