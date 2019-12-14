@@ -13,23 +13,24 @@ using std::cin;
 using std::cout;
 using std::string;
 
-void other();
 void depositing(int, string), withdrawing(int, string);
 void summaryAdmin(), summary(int, string); //takes in index
 void title(std::string pTitle, std::string pOptions);
-void createAcc();
+void createAccount();
 void home(), homeUser(), homeAdmin();
-void deleteAcc();
+void deleteAccount();
 bool isItANum(bool yesNo);
 double getCheckAmount(int, string, string);
 void editAccount();
 void displayAllAccounts();
 int checkChoice(string, string, bool);
+bool isNameValid(string);
+string firstLastName(string);
 
 class Account
 {
   //private variables
-  string firstName, lastName, password, fullName, fakeName = "";
+  string firstName, lastName, password, fullName;
   double amount = 0;
 
 public:
@@ -81,13 +82,17 @@ void Account::changeName(string xName, string yName)
   fullName = xName + " " + yName;
 }
 
-std::vector<Account> dbAccounts = {Account("James", "Bond", "007", 20000.0)}; //will act as our database
+//this will act as our database
+std::vector<Account> dbAccounts = {Account("James",
+                                           "Bond",
+                                           "007",
+                                           20000.0)};
 bool found;
 string currentAccount;
 
 int main()
 {
-  createAcc();
+  createAccount();
 
   home();
 
@@ -141,10 +146,10 @@ void homeAdmin()
     withdrawing(0, "admin");
     break;
   case 4:
-    createAcc();
+    createAccount();
     break;
   case 5:
-    deleteAcc();
+    deleteAccount();
     break;
   case 6:
     editAccount();
@@ -207,14 +212,14 @@ void homeUser()
   }
 }
 
-void createAcc() //done
+void createAccount() //done
 {
   string firstName, lastName, password;
   double initialAmount;
-  title("Create Account", "Your first name: \n");
-  std::getline(cin, firstName);
-  cout << "Your last name: \n";
-  std::getline(cin, lastName);
+
+  firstName = firstLastName("first");
+  lastName = firstLastName("last");
+
   do
   {
     if (initialAmount > 50000)
@@ -234,6 +239,37 @@ void createAcc() //done
       initialAmount));
 
   homeAdmin();
+}
+
+string firstLastName(string fl)
+{
+  string iName;
+  bool namePassed = true;
+  do
+  {
+    if (namePassed == false)
+      title("Create Account. Your " + fl + " name: ",
+            "Invalid name.\n>");
+    else
+      title("Create Account. Your " + fl + " name: ", ">");
+    std::getline(cin, iName);
+    namePassed = isNameValid(iName);
+  } while (namePassed == false);
+  return iName;
+}
+
+bool isNameValid(string chkName) //return true if valid
+{
+  for (int i = 0; i < chkName.size(); i++)
+  {
+    if (isdigit(chkName[i])) //checks for digits
+      return false;
+    else if (isspace(chkName[i])) //space checking
+      return false;
+    else if (i > 0 && isupper(chkName[i])) //capitals
+      return false;
+  } //checks if name exists and 1st letter Capitalized
+  return chkName.size() && isupper(chkName[0]);
 }
 
 void summaryAdmin() //done
@@ -370,17 +406,11 @@ void displayAllAccounts()
   }
 }
 
-void other()
-{
-  title("What would you like to do?",
-        "1. New account\n2. Search Account\n3. Delete Account\n");
-}
-
 void searchAcc()
 {
 }
 
-void deleteAcc()
+void deleteAccount()
 {
   title("What account would you like to delete?",
         "1. placeholder\n1. placeholder\n");
@@ -426,7 +456,7 @@ void editAccount()
   homeAdmin();
 }
 
-double getCheckAmount(int i, string depositOrWithdraw, string askTitle) //checks if is a number
+double getCheckAmount(int i, string depositOrWithdraw, string askTitle)
 {
   double xCash;
   bool keepLooping = true;
