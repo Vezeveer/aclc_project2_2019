@@ -322,12 +322,17 @@ void summaryAdmin() //done
 
 void summary(int i, string adminOrUser) //done
 {
-  title("SUMMARY", "");
-  cout << std::fixed << std::setprecision(0) //removes scientific notation
-       << "Account Name: " << dbAccounts[i].getFullName()
-       << "\nAmount: " << dbAccounts[i].getAmount() << " PHP"
-       << "\n-----------------------------------\n";
+  string actualAmount = std::to_string(dbAccounts[i].getAmount());
+  //removes the last 4 digits
+  actualAmount.erase(actualAmount.size() - 4, 4);
 
+  string optionsTitle = "Account Name: " +
+                        dbAccounts[i].getFullName() +
+                        "\nAmount: " +
+                        actualAmount +
+                        " PHP";
+
+  title("Account Summary", optionsTitle);
   system("pause");
 
   if (adminOrUser == "admin")
@@ -440,7 +445,6 @@ string displayAllAccounts()
   {
     if (j == (dbAccounts.size() - 1))
       lastLine = "";
-    //cout << j + 1 << ". " << dbAccounts[j].getFullName() << "\n";
     aContainer.append(std::to_string(j + 1) + ". " +
                       dbAccounts[j].getFullName() +
                       lastLine);
