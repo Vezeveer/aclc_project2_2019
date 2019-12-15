@@ -94,6 +94,10 @@ string userAccInput;
 
 int main()
 {
+  //depositing(1, "admin");
+
+  //system("pause");
+
   home();
 
   system("pause");
@@ -109,9 +113,11 @@ void home()
         optionsTitle);
   x = checkChoice(leadTitle, optionsTitle, maxChoices);
 
-  cin.ignore();
   if (x == 1)
+  {
+    cin.ignore();
     homeUser("passwordOn");
+  }
   else if (x == 2)
     homeAdmin("passwordOn");
   else
@@ -126,6 +132,7 @@ void home()
                          max(),
                  '\n');
     }
+    cin.ignore();
     home();
   }
 }
@@ -133,8 +140,9 @@ void home()
 void homeAdmin(string passwordOnOff)
 {
   int option, maxChoices = 7;
-  string leadTitle = "Welcome. Please select one"
-                     " of\nthe following:",
+  string leadTitle = "Welcome, Admin.\n"
+                     "Please select one"
+                     " of the following:",
          optionsTitle = "1. Summary\n2. Deposit"
                         "\n3. Withdraw\n4. Create\n"
                         "5. Delete\n6. Edit Account"
