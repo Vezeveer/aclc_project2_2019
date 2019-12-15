@@ -234,13 +234,29 @@ void homeUser(string passwordOnOff)
 
 void createAccount() //done
 {
-  string firstName, lastName, password;
+  string firstName, lastName, password, fullName;
   double initialAmount = 0;
-  bool invalidPassword = false;
+  bool invalidPassword = false, loopNameGet = false;
 
   cin.ignore(); //remove previous input from checkChoice
-  firstName = createName("first", "new");
-  lastName = createName("last", "new");
+  do
+  { //get name & check database for duplicates
+    firstName = createName("first", "new");
+    lastName = createName("last", "new");
+    fullName = firstName + " " + lastName;
+    for (int i = 0; i < dbAccounts.size(); i++)
+    {
+      if (fullName == dbAccounts[i].getFullName())
+      {
+        loopNameGet = true;
+        title("CREATING", "Name already exist."
+                          "\nTry another name.");
+        system("pause");
+      }
+      else
+        loopNameGet = false;
+    }
+  } while (loopNameGet);
 
   do //Get Initial Deposit
   {
@@ -250,9 +266,11 @@ void createAccount() //done
       title("Initial deposit: ", "Amount must be between"
                                  "\n500 - 50000");
 
-    initialAmount = getMoneyInput("CREATING", "Amount must be between"
-                                              "\n500 - 50000",
-                                  "INVALID amount. Should be between"
+    initialAmount = getMoneyInput("CREATING",
+                                  "Amount must be between"
+                                  "\n500 - 50000",
+                                  "INVALID amount."
+                                  " Should be between"
                                   "\n500 - 50000",
                                   500, 50000);
   } while (initialAmount > 50000 || initialAmount < 500);
@@ -573,7 +591,8 @@ void deleteAccount()
         displayAllAccounts());
   choice = checkChoice(leadTitle +
                            "\nWhat account would you like to delete?",
-                       displayAllAccounts(), maxChoices);
+                       displayAllAccounts(), maxChoices) -
+           1;
 
   dbAccounts.erase(dbAccounts.begin() + choice);
 
