@@ -8,6 +8,7 @@
 #include <vector>
 #include <limits>  //gets cin size to handle bad input
 #include <iomanip> //removes scientific notation
+#include <fstream> //handles files
 
 using std::cin;
 using std::cout;
@@ -29,6 +30,9 @@ string createName(string, string);
 bool isPassInvalid(string);
 double getMoneyInput(string, string, string, double, double);
 bool isItAValidNumber(bool);
+int pauseScreen(int);
+void writeDBToFile();
+void readDBFromFile();
 
 class Account
 {
@@ -89,20 +93,95 @@ void Account::changeName(string xName, string yName)
   fullName = xName + " " + yName;
 }
 
-//this will act as our database
-std::vector<Account> dbAccounts = {Account("James",
-                                           "Bond",
-                                           "007",
-                                           20000.0)};
+std::vector<Account> dbAccounts;
 bool userFound = false;
 string userAccInput;
 
 int main()
 {
+  readDBFromFile();
   home();
 
-  system("pause");
+  pauseScreen(0);
   return 0;
+}
+
+void writeDBToFile()
+{
+  std::ofstream dbFile;
+  string lastElement = " ";
+  dbFile.open("dbAccounts.txt");
+
+  if (dbFile.fail())
+  {
+    cout << "Error reading file\n";
+    exit(1);
+  }
+
+  if (dbAccounts.size() != 0)
+  { //add each iteration to file seperated by spaces
+    for (int i = 0; i < dbAccounts.size(); i++)
+    {
+      if (i == dbAccounts.size() - 1)
+        lastElement = ""; //spaces are seen as next line
+
+      dbFile << dbAccounts[i].getFirstName() + "," +
+                    dbAccounts[i].getLastName() + "," +
+                    std::to_string(dbAccounts[i].getAmount()) +
+                    "," +
+                    dbAccounts[i].getPassword() + lastElement;
+    }
+  }
+
+  dbFile.close(); //closes file
+  title("SAVING", "Successfully saved to file.");
+  cout << "Press any key to exit";
+  pauseScreen(0);
+  exit(1);
+}
+
+void readDBFromFile()
+{
+  std::ifstream dbFile;             //create object
+  std::vector<string> strContainer; //all lines here
+  string strLine;                   //each line will be stored here
+  dbFile.open("dbAccounts.txt");
+
+  if (dbFile.fail())
+  {
+    cout << "Error reading file\n";
+    exit(1);
+  }
+
+  //put contents of file into string vector
+  while (dbFile.eof() == false)
+  {
+    string firstN, secondN, balancE, passW;
+
+    dbFile >> strLine; //get iteration
+
+    strContainer.push_back(strLine);
+
+    firstN = strLine.substr(0, strLine.find(","));
+    strLine.erase(0, strLine.find(",") + 1);
+
+    secondN = strLine.substr(0, strLine.find(","));
+    strLine.erase(0, strLine.find(",") + 1);
+
+    balancE = strLine.substr(0, strLine.find(","));
+    strLine.erase(0, strLine.find(",") + 1);
+
+    double bal = std::stod(balancE); //convert to double
+
+    if (string::npos == strLine.find(","))
+      passW = strLine;
+
+    //pass to vector database that the program will work on
+    dbAccounts.push_back(Account(firstN, secondN, passW, bal));
+  }
+
+    //close file
+  dbFile.close();
 }
 
 void home()
@@ -110,27 +189,20 @@ void home()
   int x, maxChoices = 2;
   string leadTitle = "Select an option:",
          optionsTitle = "1. User\n2. Admin";
+
   title(leadTitle,
         optionsTitle);
   x = checkChoice(leadTitle, optionsTitle, maxChoices);
 
   if (x == 1)
-  {
     homeUser("passwordOn", "", 0);
-  }
   else if (x == 2)
     homeAdmin("passwordOn");
-  else
-  {
-    cout << "\nInvalid Input or Option.\n\n";
-    system("pause");
-    home();
-  }
 }
 
 void homeAdmin(string passwordOnOff)
 {
-  int option, maxChoices = 7;
+  int option, maxChoices = 8;
   bool locked = true;
   string leadTitle = "Welcome, Admin.\n"
                      "Please select one"
@@ -138,7 +210,8 @@ void homeAdmin(string passwordOnOff)
          optionsTitle = "1. Summary\n2. Deposit"
                         "\n3. Withdraw\n4. Create\n"
                         "5. Delete\n6. Edit Account"
-                        "\n7. Switch to user",
+                        "\n7. Switch to user"
+                        "\n8. Save and Exit",
          inputPassword;
 
   if (passwordOnOff == "passwordOn")
@@ -186,10 +259,10 @@ void homeAdmin(string passwordOnOff)
     case 7:
       homeUser("passwordOn", "", 0);
       break;
+    case 8:
+      writeDBToFile();
+      break;
     default:
-      cout << "\nInvalid Input or Option.\n\n";
-      system("pause");
-      homeAdmin("passwordOff");
       break;
     }
   }
@@ -259,6 +332,7 @@ void homeUser(string passwordOnOff, string chosenAccount, int accIndex)
   string optionsTitle = "1. Summary\n2. Deposit\n"
                         "3. Withdraw\n4. Switch to admin";
 
+  //Ask get choice
   title(wlcTitle, optionsTitle);
   option = checkChoice(wlcTitle, optionsTitle, maxChoices);
 
@@ -277,13 +351,6 @@ void homeUser(string passwordOnOff, string chosenAccount, int accIndex)
   //Go back home
   if (userAccInput == "home")
     home();
-  /*
-  if (userFound == false) //loop back if user not found
-  {
-
-    system("pause");
-    homeUser("passwordOn", "", 0);
-  }*/
 }
 
 void createAccount() //done
@@ -304,7 +371,8 @@ void createAccount() //done
         loopNameGet = true;
         title("CREATING", "Name already exist."
                           "\nTry another name.");
-        system("pause");
+        cout << "Press enter to start over";
+        pauseScreen(0);
       }
       else
         loopNameGet = false;
@@ -427,7 +495,8 @@ void summary(int index, string adminOrUser) //done
                         " PHP";
 
   title("Account Summary", optionsTitle);
-  system("pause");
+  cout << "Press enter to continue...";
+  pauseScreen(0);
 
   if (adminOrUser == "admin")
     homeAdmin("passwordOff");
@@ -521,7 +590,8 @@ void withdrawing(int index, string adminOrUser)
                        "\nCurrent Balance: " +
                        postBalance + " PHP");
 
-  system("pause");
+  cout << "Press enter to continue...";
+  pauseScreen(0);
   if (adminOrUser == "admin")
     homeAdmin("passwordOnOff");
   homeUser("passwordOnOff", dbAccounts[i].getFullName(), i);
@@ -564,7 +634,8 @@ void depositing(int i, string adminOrUser) //done
                        strDeposit +
                        "\nCurrent Balance: " +
                        strBalance + " PHP");
-  system("pause");
+  cout << "Press enter to continue...";
+  pauseScreen(0);
 
   if (adminOrUser == "admin") //return to home
     homeAdmin("passwordOff");
@@ -635,12 +706,16 @@ void deleteAccount()
   dbAccounts.erase(dbAccounts.begin() + choice);
 
   title(leadTitle, "Success.");
-  system("pause");
+  cout << "Press enter to continue...";
+  pauseScreen(0);
+
   if (dbAccounts.size() == 0)
   {
     title("NO ACCOUNTS LEFT IN DATABASE",
           "We will create a new account.");
-    system("pause");
+    cout << "Press enter to continue...";
+    pauseScreen(0);
+
     createAccount();
   }
   homeAdmin("passwordOff");
@@ -759,4 +834,11 @@ bool isItAValidNumber(bool didItFail) //returns true if valid
     cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     return true;
   }
+}
+
+int pauseScreen(int returnNothing)
+{
+  //we can also use cin.ignore to wait until enter is pressed
+  cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  return returnNothing;
 }
