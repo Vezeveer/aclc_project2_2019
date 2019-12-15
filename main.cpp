@@ -20,13 +20,14 @@ void createAccount();
 void home(), homeUser(string), homeAdmin(string);
 void deleteAccount();
 bool isItANum(bool yesNo);
-double getCheckAmount(int, string, string, string);
+double checkGetAccAmount(int, string, string, string);
 void editAccount();
 string displayAllAccounts();
 int checkChoice(string, string, int);
 bool isNameValid(string);
-string firstLastName(string, string);
+string createName(string, string);
 bool isPassInvalid(string);
+double getMoneyInput(string, string, string, double, double);
 
 class Account
 {
@@ -221,7 +222,7 @@ void homeUser(string passwordOnOff)
       home();
   }
 
-  if (userFound == false) //loop back if not userFound
+  if (userFound == false) //loop back if user not found
   {
     title("USER ACCOUNT LOGIN",
           "Account not found."
@@ -234,39 +235,40 @@ void homeUser(string passwordOnOff)
 void createAccount() //done
 {
   string firstName, lastName, password;
-  double initialAmount;
+  double initialAmount = 0;
   bool invalidPassword = false;
 
-  firstName = firstLastName("first", "new");
-  lastName = firstLastName("last", "new");
+  cin.ignore(); //remove previous input from checkChoice
+  firstName = createName("first", "new");
+  lastName = createName("last", "new");
 
-  do
+  do //Get Initial Deposit
   {
-    if (initialAmount > 50000)
+    if (initialAmount > 50000 || initialAmount < 500)
       cout << "Please enter 50000 or less:\n";
     else
-      title("Initial deposit: ", ">");
-    cin >> initialAmount;
-    if (cin.fail())
-    {
-      cin.clear();
-      cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    }
-    else
-      cin.ignore();
-  } while (initialAmount > 50000);
+      title("Initial deposit: ", "Amount must be between"
+                                 "\n500 - 50000");
 
-  do
+    initialAmount = getMoneyInput("CREATING", "Amount must be between"
+                                              "\n500 - 50000",
+                                  "INVALID amount. Should be between"
+                                  "\n500 - 50000",
+                                  500, 50000);
+  } while (initialAmount > 50000 || initialAmount < 500);
+
+  do //Get Password
   {
     if (invalidPassword)
-      title("Enter password: ", "Invalid Password.\n>");
+      title("CREATING", "Invalid Password.\n"
+                        "Must contain no spaces");
     else
-      title("Enter password: ", ">");
+      title("CREATING", "Enter new password");
     getline(cin, password);
     invalidPassword = isPassInvalid(password);
   } while (invalidPassword);
 
-  dbAccounts.push_back(Account( //add account
+  dbAccounts.push_back(Account( //Add Account Details
       firstName,
       lastName,
       password,
@@ -286,33 +288,31 @@ bool isPassInvalid(string iPassword)
 }
 
 //return name if valid
-string firstLastName(string fl, string newOrEdit)
+string createName(string firstOrLast, string newOrEdit)
 {
   string newName, leadTitle, optionsTitle;
-  bool namePassed = true;
 
   if (newOrEdit == "edit")
   {
     leadTitle = "EDITING";
-    optionsTitle = "Your new " + fl + " name";
+    optionsTitle = "Your new " + firstOrLast + " name";
   }
   else
   {
     leadTitle = "CREATING";
-    optionsTitle = "\nYour " + fl + " name";
+    optionsTitle = "Your " + firstOrLast + " name";
   }
 
-  do
+  title(leadTitle, optionsTitle);
+  std::getline(cin, newName);
+
+  while (isNameValid(newName) == false)
   {
-    if (namePassed == true)
-      title(leadTitle, optionsTitle);
-    else
-      title(leadTitle, "Invalid name.\n"
-                       "Name must not contain spaces\n"
-                       "or special characters");
+    title(leadTitle, "Invalid name.\n"
+                     "Name must not contain spaces\n"
+                     "or special characters");
     std::getline(cin, newName);
-    namePassed = isNameValid(newName);
-  } while (namePassed == false);
+  }
 
   return newName;
 }
@@ -379,7 +379,7 @@ void withdrawing(int i, string adminOrUser)
 
     /*
     title(leadTitle, askTitle);
-    dbAccounts[i].withdrawAmount(getCheckAmount(i,
+    dbAccounts[i].withdrawAmount(checkGetAccAmount(i,
                                                 "withdraw",
                                                 leadTitle,
                                                 optionsTitle));
@@ -428,10 +428,10 @@ void withdrawing(int i, string adminOrUser)
       break;
     case 5:
       //Ask Custom Amount
-      withDrawAmount = getCheckAmount(i,
-                                      "withdraw",
-                                      leadTitle,
-                                      optionsTitle);
+      withDrawAmount = checkGetAccAmount(i,
+                                         "withdraw",
+                                         leadTitle,
+                                         optionsTitle);
       dbAccounts[i]
           .withdrawAmount(withDrawAmount);
       break;
@@ -487,10 +487,10 @@ void depositing(int i, string adminOrUser) //done
   }
 
   title(leadTitle, specifyOptionsTitle);
-  amount2Deposit = getCheckAmount(i,
-                                  "deposit",
-                                  leadTitle,
-                                  optionsTitle);
+  amount2Deposit = checkGetAccAmount(i,
+                                     "deposit",
+                                     leadTitle,
+                                     optionsTitle);
 
   dbAccounts[i].depositAmount(amount2Deposit);
 
@@ -519,9 +519,10 @@ int checkChoice(string leadTitle,
                 int maxChoices)
 {
   int inputChoice;
+  string strChoice;
   bool invalidChoice = true;
 
-  while (invalidChoice)
+  do
   {
     cin >> inputChoice;
     if (cin.fail() ||
@@ -541,7 +542,7 @@ int checkChoice(string leadTitle,
     }
     else
       invalidChoice = false; //else exit loop & return input
-  }
+  } while (invalidChoice);
 
   return inputChoice;
 }
@@ -613,9 +614,9 @@ void editAccount()
   if (xC == 1)
   {
     title("Enter new first name: ", ">");
-    xfName = firstLastName("first", "edit");
+    xfName = createName("first", "edit");
     title("Enter new last name: ", ">");
-    xlName = firstLastName("last", "edit");
+    xlName = createName("last", "edit");
 
     dbAccounts[xIndex].changeName(xfName, xlName);
     summary(xIndex, "admin");
@@ -624,11 +625,52 @@ void editAccount()
   homeAdmin("passwordOff");
 }
 
+double getMoneyInput(string leadTitle,
+                     string optionsTitle,
+                     string invalidTitle,
+                     double min,
+                     double max)
+{
+  double moneyInput;
+  bool keepLooping = false;
+
+  do
+  {
+    if (keepLooping == false)
+      title(leadTitle, optionsTitle);
+    else
+      title(leadTitle, invalidTitle);
+    cin >> moneyInput;
+    //check if it is a number
+    if (cin.fail() == true)
+    {
+      cin.clear();
+      cin.ignore(std::
+                     numeric_limits<std::
+                                        streamsize>::
+                         max(),
+                 '\n');
+      keepLooping = true;
+    } //check if it is within min max
+    else if (moneyInput < min || moneyInput > max)
+    {
+      title(leadTitle, invalidTitle);
+      cin >> moneyInput;
+    }
+    else
+      keepLooping = false;
+
+  } while (keepLooping);
+
+  cin.ignore();
+  return moneyInput;
+}
+
 //returns amount if valid
-double getCheckAmount(int i,
-                      string depositOrWithdraw,
-                      string leadTitle,
-                      string optionsTitle)
+double checkGetAccAmount(int i,
+                         string depositOrWithdraw,
+                         string leadTitle,
+                         string optionsTitle)
 {
   double balance = dbAccounts[i].getAmount();
   //remove scientific notation
