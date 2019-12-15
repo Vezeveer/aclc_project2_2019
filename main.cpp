@@ -566,9 +566,26 @@ void searchAcc()
 
 void deleteAccount()
 {
-  title("What account would you like to delete?",
-        "1. placeholder\n1. placeholder\n");
-  //array of accounts... or i dunno leme see
+  string leadTitle = "ACCOUNT DELETION";
+  int choice, maxChoices = dbAccounts.size();
+  title(leadTitle + "\nWhat account would you like to delete?",
+        displayAllAccounts());
+  choice = checkChoice(leadTitle +
+                           "\nWhat account would you like to delete?",
+                       displayAllAccounts(), maxChoices);
+
+  dbAccounts.erase(dbAccounts.begin() + choice);
+
+  title(leadTitle, "Success.");
+  system("pause");
+  if (dbAccounts.size() == 0)
+  {
+    title("NO ACCOUNTS LEFT IN DATABASE",
+          "We will create a new account.");
+    system("pause");
+    createAccount();
+  }
+  homeAdmin("passwordOff");
 }
 
 void title(std::string leadTitle, std::string optionsTitle)
