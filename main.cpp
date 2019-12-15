@@ -490,8 +490,7 @@ void depositing(int i, string adminOrUser) //done
   double amount2Deposit;
   string leadTitle = "DEPOSITING";
   string specifyOptionsTitle = "Specify amount"
-                               " to deposit between"
-                               "\n500-50000";
+                               " to deposit";
   string askAccTitle = "Deposit to which account?";
   string optionsTitle = "...none for now";
 
@@ -499,19 +498,19 @@ void depositing(int i, string adminOrUser) //done
   {
     title(askAccTitle, displayAllAccounts());
 
-    iAdmin = checkChoice(askAccTitle, "", maxChoices);
+    iAdmin = checkChoice(askAccTitle, displayAllAccounts(), maxChoices);
     iAdmin -= 1;
     i = iAdmin;
   }
-
-  title(leadTitle, specifyOptionsTitle);
-  amount2Deposit = checkGetAccAmount(i,
-                                     "deposit",
-                                     leadTitle,
-                                     optionsTitle);
-
+  amount2Deposit = getMoneyInput(leadTitle,
+                                 specifyOptionsTitle,
+                                 "Invailid Amount\n"
+                                 "Must be between "
+                                 "500 - 50000",
+                                 500, 50000);
   dbAccounts[i].depositAmount(amount2Deposit);
 
+  //convert to string for display
   string strDeposit = std::to_string(amount2Deposit);
   strDeposit.erase(strDeposit.size() - 4, 4);
   string strBalance = std::to_string(dbAccounts[i].getAmount());
@@ -522,8 +521,17 @@ void depositing(int i, string adminOrUser) //done
                        strDeposit +
                        "\nCurrent Balance: " +
                        strBalance + " PHP");
-
   system("pause");
+
+  /*
+
+  title(leadTitle, specifyOptionsTitle);
+  amount2Deposit = checkGetAccAmount(i,
+                                     "deposit",
+                                     leadTitle,
+                                     optionsTitle);
+
+  */
 
   if (adminOrUser == "admin") //return to home
     homeAdmin("passwordOff");
@@ -546,7 +554,7 @@ int checkChoice(string leadTitle,
     if (cin.fail() ||
         inputChoice >
             maxChoices ||
-        inputChoice == 0) //goes thru if input is invalid
+        inputChoice <= 0) //goes thru if input is invalid
     {
       title(leadTitle, optionsTitle);
 
@@ -643,7 +651,7 @@ void editAccount()
   cout << "Invalid Input.\n";
   homeAdmin("passwordOff");
 }
-
+//###       ###     ###     ####
 double getMoneyInput(string leadTitle,
                      string optionsTitle,
                      string invalidTitle,
@@ -675,13 +683,14 @@ double getMoneyInput(string leadTitle,
     {
       title(leadTitle, invalidTitle);
       cin >> moneyInput;
+      keepLooping = true;
     }
     else
       keepLooping = false;
 
   } while (keepLooping);
 
-  cin.ignore();
+  //cin.ignore();
   return moneyInput;
 }
 
@@ -691,6 +700,7 @@ double checkGetAccAmount(int i,
                          string leadTitle,
                          string optionsTitle)
 {
+  string invalidTitle = "Wrong amount";
   double balance = dbAccounts[i].getAmount();
   //remove scientific notation
   string strBalance = std::to_string(balance);
@@ -698,6 +708,9 @@ double checkGetAccAmount(int i,
   double xCash;
   bool invalidInput = true;
 
+  xCash = getMoneyInput(leadTitle, optionsTitle, invalidTitle, 500, 50000);
+
+  /*
   do
   {
     if (cin.fail()) //if input are letters
@@ -714,12 +727,11 @@ double checkGetAccAmount(int i,
     title(leadTitle + "\nEnter the amount to " +
               depositOrWithdraw,
           "Current Balance: " + strBalance);
-    cin >> xCash; //Actual Input
-
+//input here... missing
     invalidInput = cin.fail();
 
     //checks if amounts are correct
-    if (cin.fail() == false)
+    if (invalidInput == false)
     {
       if (depositOrWithdraw == "deposit")
       {
@@ -750,11 +762,13 @@ double checkGetAccAmount(int i,
           invalidInput = false;
       }
     }
-    else
-      invalidInput = cin.fail();
+    else //if input was invalid continue looping
+      invalidInput = true;
   } while (invalidInput);
 
   cin.ignore();
+
+  */
   return xCash;
 }
 
