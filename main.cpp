@@ -17,7 +17,7 @@ void depositing(int, string), withdrawing(int, string);
 void summaryAdmin(), summary(int, string); //takes in index
 void title(std::string pTitle, std::string pOptions);
 void createAccount();
-void home(), homeUser(), homeAdmin();
+void home(), homeUser(string), homeAdmin(string);
 void deleteAccount();
 bool isItANum(bool yesNo);
 double getCheckAmount(int, string, string, string);
@@ -110,9 +110,9 @@ void home()
 
   cin.ignore();
   if (x == 1)
-    homeUser();
+    homeUser("passwordOn");
   else if (x == 2)
-    homeAdmin();
+    homeAdmin("passwordOn");
   else
   {
     cout << "\nInvalid Input or Option.\n\n";
@@ -129,7 +129,7 @@ void home()
   }
 }
 
-void homeAdmin()
+void homeAdmin(string passwordOnOff)
 {
   int option, maxChoices = 7;
   string leadTitle = "Welcome. Please select one"
@@ -164,7 +164,7 @@ void homeAdmin()
     break;
   case 7:
     cin.ignore();
-    homeUser();
+    homeUser("passwordOn");
     break;
   default:
     cout << "\nInvalid Input or Option.\n\n";
@@ -174,14 +174,14 @@ void homeAdmin()
       cin.clear();
       cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
-    homeAdmin();
+    homeAdmin("passwordOff");
     break;
   }
 }
 
-void homeUser()
+void homeUser(string passwordOnOff)
 {
-  string option;
+  int option;
 
   if (!userFound)
   {
@@ -191,20 +191,27 @@ void homeUser()
 
   for (int i = 0; i < dbAccounts.size(); i++) //acc index finder
   {
+    string wlcTitle = "Welcome, " + dbAccounts[i].getFullName() +
+                      ".\nPlease select one of the following:";
+    string optionsTitle = "1. Summary\n2. Deposit\n"
+                          "3. Withdraw\n4. Switch to admin";
+    int maxChoices = 4;
     userFound = userAccInput == dbAccounts[i].getFullName();
+
     if (userFound)
     {
-      title("Welcome, " + dbAccounts[i].getFullName() +
-                ".\nPlease select one of the following:",
-            "1. Summary\n2. Deposit\n3. Withdraw\n4. Switch to admin");
-      std::getline(cin, option);
-      if (option == "1")
+      title(wlcTitle,
+            optionsTitle);
+
+      option = checkChoice(wlcTitle, optionsTitle, maxChoices);
+
+      if (option == 1)
         summary(i, "user");
-      if (option == "2")
+      if (option == 2)
         depositing(i, "user");
-      if (option == "3")
+      if (option == 3)
         withdrawing(i, "user");
-      if (option == "4")
+      if (option == 4)
       {
         userFound = false;
         home();
@@ -220,7 +227,7 @@ void homeUser()
           "Account not found."
           "\nTry again or type \"home\" to go back");
     system("pause");
-    homeUser();
+    homeUser("passwordOn");
   }
 }
 
@@ -265,7 +272,7 @@ void createAccount() //done
       password,
       initialAmount));
 
-  homeAdmin();
+  homeAdmin("passwordOff");
 }
 
 bool isPassInvalid(string iPassword)
@@ -343,15 +350,16 @@ void summary(int i, string adminOrUser) //done
   system("pause");
 
   if (adminOrUser == "admin")
-    homeAdmin();
+    homeAdmin("passwordOff");
   else
-    homeUser();
+    homeUser("passwordOff");
 }
 
 void withdrawing(int i, string adminOrUser)
 {
   bool keepLooping = true;
   double withDrawAmount = 0;
+  int maxDrawChoices = 5;
   string leadTitle = "WITHDRAWING";
   string adminTitle = "\nWithdraw from which account?";
   string askTitle = "\nHow much would you like to withdraw?";
@@ -360,6 +368,8 @@ void withdrawing(int i, string adminOrUser)
 
   if (adminOrUser == "user")
   {
+
+    /*
     title(leadTitle, askTitle);
     dbAccounts[i].withdrawAmount(getCheckAmount(i,
                                                 "withdraw",
@@ -372,78 +382,78 @@ void withdrawing(int i, string adminOrUser)
 
     system("pause");
     homeUser();
+    */
   }
-
-  if (adminOrUser == "admin")
+  else if (adminOrUser == "admin")
   {
-    int iAdmin,
-        maxAccChoices = dbAccounts.size(),
-        maxDrawChoices = 5;
+    int maxAccChoices = dbAccounts.size();
+    maxDrawChoices = 5;
 
-    //Ask account
+    //Ask account index
     title(leadTitle + adminTitle, displayAllAccounts());
-    iAdmin = checkChoice(leadTitle + adminTitle,
-                         displayAllAccounts(),
-                         maxAccChoices);
-    iAdmin -= 1;
-    i = iAdmin;
-
-    //Ask Preset Amount
-    do
-    {
-      title(leadTitle + askTitle, optionsTitle);
-      int choice = checkChoice(leadTitle + adminTitle,
-                               optionsTitle,
-                               maxDrawChoices);
-      switch (choice)
-      {
-      case 1:
-        withDrawAmount = 500;
-        break;
-      case 2:
-        withDrawAmount = 1500;
-        break;
-      case 3:
-        withDrawAmount = 3000;
-        break;
-      case 4:
-        withDrawAmount = 5000;
-        break;
-      case 5:
-        //Ask Custom Amount
-        dbAccounts[i].withdrawAmount(getCheckAmount(i,
-                                                    "withdraw",
-                                                    leadTitle,
-                                                    optionsTitle));
-        break;
-      default:
-        break;
-      }
-
-      if (withDrawAmount <= dbAccounts[i].getAmount())
-      {
-        dbAccounts[i].withdrawAmount(withDrawAmount);
-        keepLooping = false;
-      }
-      else
-        keepLooping = true;
-    } while (keepLooping);
-
-    //convert doubles to strings
-    string crAmount = std::to_string(dbAccounts[i].getAmount());
-    crAmount.erase(crAmount.size() - 4, 4);
-    string strAmount = std::to_string(withDrawAmount);
-    strAmount.erase(strAmount.size() - 4, 4);
-
-    title(leadTitle, "Success.\n"
-                     "Amount Drawn: " +
-                         strAmount +
-                         "\nCurrent Balance: " +
-                         crAmount + " PHP");
-
-    system("pause");
-    homeAdmin();
+    i = checkChoice(leadTitle + adminTitle,
+                    displayAllAccounts(),
+                    maxAccChoices) -
+        1;
   }
+
+  //Ask Preset Amount
+  do
+  {
+    title(leadTitle + askTitle, optionsTitle);
+    int choice = checkChoice(leadTitle + askTitle,
+                             optionsTitle,
+                             maxDrawChoices);
+    switch (choice)
+    {
+    case 1:
+      withDrawAmount = 500;
+      break;
+    case 2:
+      withDrawAmount = 1500;
+      break;
+    case 3:
+      withDrawAmount = 3000;
+      break;
+    case 4:
+      withDrawAmount = 5000;
+      break;
+    case 5:
+      //Ask Custom Amount
+      dbAccounts[i].withdrawAmount(getCheckAmount(i,
+                                                  "withdraw",
+                                                  leadTitle,
+                                                  optionsTitle));
+      break;
+    default:
+      break;
+    }
+
+    if (withDrawAmount <= dbAccounts[i].getAmount())
+    {
+      dbAccounts[i].withdrawAmount(withDrawAmount);
+      keepLooping = false;
+    }
+    else
+      keepLooping = true;
+  } while (keepLooping);
+
+  //convert doubles to strings & display success
+  string crAmount = std::to_string(dbAccounts[i].getAmount());
+  crAmount.erase(crAmount.size() - 4, 4);
+  string strAmount = std::to_string(withDrawAmount);
+  strAmount.erase(strAmount.size() - 4, 4);
+
+  title(leadTitle, "Success.\n"
+                   "Amount Drawn: " +
+                       strAmount +
+                       "\nCurrent Balance: " +
+                       crAmount + " PHP");
+
+  system("pause");
+  if (adminOrUser == "admin")
+    homeAdmin("passwordOnOff");
+  homeUser("passwordOnOff");
 }
 
 void depositing(int i, string adminOrUser) //done
@@ -488,9 +498,9 @@ void depositing(int i, string adminOrUser) //done
   system("pause");
 
   if (adminOrUser == "admin") //return to home
-    homeAdmin();
+    homeAdmin("passwordOff");
   else
-    homeUser();
+    homeUser("passwordOff");
 }
 
 //Asks for a number. Returns number if valid
@@ -588,7 +598,7 @@ void editAccount()
     summary(xIndex, "admin");
   }
   cout << "Invalid Input.\n";
-  homeAdmin();
+  homeAdmin("passwordOff");
 }
 
 //returns amount if valid
