@@ -17,7 +17,7 @@ void depositing(int, string), withdrawing(int, string);
 void summaryAdmin(), summary(int, string); //takes in index
 void title(std::string pTitle, std::string pOptions);
 void createAccount();
-void home(), homeUser(string), homeAdmin(string);
+void home(), homeUser(string, string, int), homeAdmin(string);
 void deleteAccount();
 bool isItANum(bool didItFail);
 double checkGetAccAmount(int, string, string, string);
@@ -74,6 +74,10 @@ public:
   {
     amount -= yAmount;
   }
+  string getPassword()
+  {
+    return password;
+  }
   void changeName(string, string); //declared
 };
 
@@ -112,7 +116,7 @@ void home()
 
   if (x == 1)
   {
-    homeUser("passwordOn");
+    homeUser("passwordOn", "", 0);
   }
   else if (x == 2)
     homeAdmin("passwordOn");
@@ -127,98 +131,159 @@ void home()
 void homeAdmin(string passwordOnOff)
 {
   int option, maxChoices = 7;
+  bool locked = true;
   string leadTitle = "Welcome, Admin.\n"
                      "Please select one"
                      " of the following:",
          optionsTitle = "1. Summary\n2. Deposit"
                         "\n3. Withdraw\n4. Create\n"
                         "5. Delete\n6. Edit Account"
-                        "\n7. Switch to user";
+                        "\n7. Switch to user",
+         inputPassword;
 
-  title(leadTitle, optionsTitle);
-  option = checkChoice(leadTitle, optionsTitle, maxChoices);
-
-  switch (option)
+  if (passwordOnOff == "passwordOn")
   {
-  case 1:
-    summaryAdmin();
-    break;
-  case 2:
-    depositing(0, "admin"); //0 will never be used
-    break;
-  case 3:
-    withdrawing(0, "admin");
-    break;
-  case 4:
-    createAccount();
-    break;
-  case 5:
-    deleteAccount();
-    break;
-  case 6:
-    editAccount();
-    break;
-  case 7:
-    homeUser("passwordOn");
-    break;
-  default:
-    cout << "\nInvalid Input or Option.\n\n";
-    system("pause");
-    homeAdmin("passwordOff");
-    break;
+    title("Welcome, Admin.", "Enter password to proceed");
+    do
+    {
+      getline(cin, inputPassword);
+      if (inputPassword == "123")
+        locked = false;
+      else
+        title("Welcome, Admin.", "Invalid password.\n"
+                                 "Please enter correct"
+                                 " password to\nproceed");
+    } while (locked);
+  }
+  else
+    locked = false;
+
+  if (locked == false)
+  {
+    title(leadTitle, optionsTitle);
+    option = checkChoice(leadTitle, optionsTitle, maxChoices);
+
+    switch (option)
+    {
+    case 1:
+      summaryAdmin();
+      break;
+    case 2:
+      depositing(0, "admin"); //0 will never be used
+      break;
+    case 3:
+      withdrawing(0, "admin");
+      break;
+    case 4:
+      createAccount();
+      break;
+    case 5:
+      deleteAccount();
+      break;
+    case 6:
+      editAccount();
+      break;
+    case 7:
+      homeUser("passwordOn", "", 0);
+      break;
+    default:
+      cout << "\nInvalid Input or Option.\n\n";
+      system("pause");
+      homeAdmin("passwordOff");
+      break;
+    }
   }
 }
 
-void homeUser(string passwordOnOff)
+void homeUser(string passwordOnOff, string chosenAccount, int accIndex)
 {
-  int option;
+  int option, maxChoices = 4;
+  bool keepLooping = false, innerKeepLooping = false;
+  string inputPassword;
 
-  if (!userFound)
+  if (passwordOnOff == "passwordOn")
   {
-    title("USER ACCOUNT LOGIN", "Enter full name of your account");
-    std::getline(cin, userAccInput);
-  }
-
-  for (int i = 0; i < dbAccounts.size(); i++) //acc index finder
-  {
-    string wlcTitle = "Welcome, " + dbAccounts[i].getFullName() +
-                      ".\nPlease select one of the following:";
-    string optionsTitle = "1. Summary\n2. Deposit\n"
-                          "3. Withdraw\n4. Switch to admin";
-    int maxChoices = 4;
-    userFound = userAccInput == dbAccounts[i].getFullName();
-
-    if (userFound)
+    do
     {
-      title(wlcTitle,
-            optionsTitle);
+      if (keepLooping == false)
+        title("USER ACCOUNT LOGIN",
+              "Enter full name of your account");
+      else
+        title("USER ACCOUNT LOGIN",
+              "Account not found."
+              "\nTry again or type \"home\" to go back");
 
-      option = checkChoice(wlcTitle, optionsTitle, maxChoices);
+      std::getline(cin, userAccInput);
 
-      if (option == 1)
-        summary(i, "user");
-      if (option == 2)
-        depositing(i, "user");
-      if (option == 3)
-        withdrawing(i, "user");
-      if (option == 4)
+      for (int i = 0; i < dbAccounts.size(); i++) //acc index finder
       {
-        userFound = false;
-        home();
+        userFound = userAccInput == dbAccounts[i].getFullName();
+        if (userFound)
+        {
+          accIndex = i;
+          chosenAccount = dbAccounts[i].getFullName();
+          do
+          {
+            if (innerKeepLooping == false)
+              title("Welcome," + chosenAccount,
+                    "Enter your password"
+                    " to continue");
+            else
+              title("Welcome," + chosenAccount,
+                    "Entered password is invalid.\n"
+                    "Try again or type \"home\" to go back");
+            std::getline(cin, inputPassword);
+
+            if (inputPassword == dbAccounts[i].getPassword())
+            {
+              innerKeepLooping = false;
+            }
+            else
+            {
+              innerKeepLooping = true;
+            }
+
+          } while (innerKeepLooping);
+
+          keepLooping = false;
+          break;
+        }
+        else
+          keepLooping = true;
       }
-    }
-    if (userAccInput == "home")
-      home();
+    } while (keepLooping);
   }
 
+  string wlcTitle = "Welcome, " + chosenAccount +
+                    ".\nPlease select one of the following:";
+  string optionsTitle = "1. Summary\n2. Deposit\n"
+                        "3. Withdraw\n4. Switch to admin";
+
+  title(wlcTitle, optionsTitle);
+  option = checkChoice(wlcTitle, optionsTitle, maxChoices);
+
+  if (option == 1)
+    summary(accIndex, "user");
+  if (option == 2)
+    depositing(accIndex, "user");
+  if (option == 3)
+    withdrawing(accIndex, "user");
+  if (option == 4)
+  {
+    userFound = false;
+    home();
+  }
+
+  //Go back home
+  if (userAccInput == "home")
+    home();
+  /*
   if (userFound == false) //loop back if user not found
   {
-    title("USER ACCOUNT LOGIN",
-          "Account not found."
-          "\nTry again or type \"home\" to go back");
+
     system("pause");
-    homeUser("passwordOn");
-  }
+    homeUser("passwordOn", "", 0);
+  }*/
 }
 
 void createAccount() //done
@@ -348,8 +413,9 @@ void summaryAdmin() //done
   summary(x - 1, "admin");
 }
 
-void summary(int i, string adminOrUser) //done
+void summary(int index, string adminOrUser) //done
 {
+  int i = index;
   string actualAmount = std::to_string(dbAccounts[i].getAmount());
   //removes the last 4 digits
   actualAmount.erase(actualAmount.size() - 4, 4);
@@ -366,7 +432,7 @@ void summary(int i, string adminOrUser) //done
   if (adminOrUser == "admin")
     homeAdmin("passwordOff");
   else
-    homeUser("passwordOff");
+    homeUser("passwordOff", dbAccounts[i].getFullName(), index);
 }
 
 void withdrawing(int index, string adminOrUser)
@@ -458,7 +524,7 @@ void withdrawing(int index, string adminOrUser)
   system("pause");
   if (adminOrUser == "admin")
     homeAdmin("passwordOnOff");
-  homeUser("passwordOnOff");
+  homeUser("passwordOnOff", dbAccounts[i].getFullName(), i);
 }
 
 void depositing(int i, string adminOrUser) //done
@@ -503,7 +569,7 @@ void depositing(int i, string adminOrUser) //done
   if (adminOrUser == "admin") //return to home
     homeAdmin("passwordOff");
   else
-    homeUser("passwordOff");
+    homeUser("passwordOff", dbAccounts[i].getFullName(), i);
 }
 
 //Asks for a number. Returns number if valid
