@@ -285,28 +285,36 @@ bool isPassInvalid(string iPassword)
   return false;
 }
 
-string firstLastName(string fl, string newOrEdit) //return name if valid
+//return name if valid
+string firstLastName(string fl, string newOrEdit)
 {
-  string iName;
+  string newName, leadTitle, optionsTitle;
   bool namePassed = true;
 
   if (newOrEdit == "edit")
-    newOrEdit = "Editing Account.\nYour new " + fl + " name:";
+  {
+    leadTitle = "EDITING";
+    optionsTitle = "Your new " + fl + " name";
+  }
   else
-    newOrEdit = "Creating Account.\nYour " + fl + " name:";
+  {
+    leadTitle = "CREATING";
+    optionsTitle = "\nYour " + fl + " name";
+  }
 
   do
   {
-    if (namePassed == false)
-      title(newOrEdit,
-            "Invalid name.\n>");
+    if (namePassed == true)
+      title(leadTitle, optionsTitle);
     else
-      title(newOrEdit, ">");
-    std::getline(cin, iName);
-    namePassed = isNameValid(iName);
+      title(leadTitle, "Invalid name.\n"
+                       "Name must not contain spaces\n"
+                       "or special characters");
+    std::getline(cin, newName);
+    namePassed = isNameValid(newName);
   } while (namePassed == false);
 
-  return iName;
+  return newName;
 }
 
 bool isNameValid(string chkName) //return true if valid
@@ -420,10 +428,12 @@ void withdrawing(int i, string adminOrUser)
       break;
     case 5:
       //Ask Custom Amount
-      dbAccounts[i].withdrawAmount(getCheckAmount(i,
-                                                  "withdraw",
-                                                  leadTitle,
-                                                  optionsTitle));
+      withDrawAmount = getCheckAmount(i,
+                                      "withdraw",
+                                      leadTitle,
+                                      optionsTitle);
+      dbAccounts[i]
+          .withdrawAmount(withDrawAmount);
       break;
     default:
       break;
@@ -441,12 +451,12 @@ void withdrawing(int i, string adminOrUser)
   //convert doubles to strings & display success
   string crAmount = std::to_string(dbAccounts[i].getAmount());
   crAmount.erase(crAmount.size() - 4, 4);
-  string strAmount = std::to_string(withDrawAmount);
-  strAmount.erase(strAmount.size() - 4, 4);
+  string strDrawAmount = std::to_string(withDrawAmount);
+  strDrawAmount.erase(strDrawAmount.size() - 4, 4);
 
   title(leadTitle, "Success.\n"
                    "Amount Drawn: " +
-                       strAmount +
+                       strDrawAmount +
                        "\nCurrent Balance: " +
                        crAmount + " PHP");
 
@@ -573,19 +583,15 @@ void title(std::string leadTitle, std::string optionsTitle)
 void editAccount()
 {
   int dbElement, xC, xIndex, maxChoices = dbAccounts.size();
-  string xfName, xlName;
+  string xfName, xlName, leadTitle = "EDITING";
 
-  title("Which account?", displayAllAccounts());
-  for (int i = 0; i < dbAccounts.size(); i++)
-  {
-    cout << i + 1 << ". " << dbAccounts[i].getFullName() << "\n";
-  }
-  dbElement = checkChoice("Which account?", "", maxChoices);
+  title(leadTitle + "\nWhich account?", displayAllAccounts());
+  dbElement = checkChoice(leadTitle + "\nWhich account?",
+                          displayAllAccounts(), maxChoices);
   xIndex = dbElement - 1;
 
-  title("Change what?", "1. Name\n");
-  cout << "-----------------------------------\n>";
-  xC = checkChoice("Change what?", "1. Name\n", 1);
+  title(leadTitle + "\nChange what?", "1. Name");
+  xC = checkChoice(leadTitle + "\nChange what?", "1. Name", 1);
   cin.ignore();
   if (xC == 1)
   {
@@ -631,11 +637,12 @@ double getCheckAmount(int i,
               depositOrWithdraw,
           "Current Balance: " + strBalance);
     cin >> xCash; //Actual Input
+
     invalidInput = cin.fail();
 
+    //checks if amounts are correct
     if (cin.fail() == false)
     {
-      //DEPOSIT ERROR
       if (depositOrWithdraw == "deposit")
       {
         if (xCash > 50000 || xCash < 500)
@@ -649,7 +656,6 @@ double getCheckAmount(int i,
         else
           invalidInput = false;
       }
-      //WITHDRAW ERROR
       else if (depositOrWithdraw == "withdraw")
       {
         if (xCash > balance && xCash > 0 || xCash <= 0)
@@ -659,6 +665,7 @@ double getCheckAmount(int i,
                 "\nMaximum to draw: " +
                     strBalance +
                     " PHP");
+          system("pause");
           invalidInput = true;
         }
         else
