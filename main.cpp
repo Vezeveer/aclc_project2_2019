@@ -26,18 +26,23 @@ void editAccount();
 string displayAllAccounts();
 int checkChoice(string, string, int);
 bool isNameValid(string);
-string createName(string, string);
+string checkName(string, string);
 bool isPassInvalid(string);
 double getMoneyInput(string, string, string, double, double);
 bool isItAValidNumber(bool);
 int pauseScreen(int);
-void writeDBToFile();
+void writeDBToFile(string, int);
 void readDBFromFile();
+string encryptData(string);
 
 class Account
 {
   //private variables
-  string firstName, lastName, password, fullName;
+  string firstName,
+      lastName,
+      password,
+      fullName,
+      encryptedBal;
   double amount = 0;
 
 public:
@@ -52,6 +57,18 @@ public:
         amount(xAmount)
   {
     fullName = firstName + " " + lastName;
+  }
+
+  //2nd constructor (encryption purposes)
+  Account(string fName,
+          string lName,
+          string xPass,
+          string eBal)
+      : firstName(fName),
+        lastName(lName),
+        password(xPass),
+        encryptedBal(eBal)
+  {
   }
 
   std::string getFullName()
@@ -93,95 +110,166 @@ void Account::changeName(string xName, string yName)
   fullName = xName + " " + yName;
 }
 
-std::vector<Account> dbAccounts;
-bool userFound = false;
-string userAccInput;
+std::vector<Account> dbAccounts; //objects of accounts
+bool userLoggedIn = false;
+string userAccInput; //compare input with db
+std::vector<std::vector<int>> decryptDBKeys;
+std::vector<int> decryptKey;
+string strTempDB;
 
 int main()
 {
-  readDBFromFile();
+  readDBFromFile(); //loads database
+
   home();
 
   pauseScreen(0);
   return 0;
 }
 
-void writeDBToFile()
+void readDBFromFile()
 {
-  std::ofstream dbFile;
-  string lastElement = " ";
-  dbFile.open("dbAccounts.txt");
+  std::ifstream dbFile; //create object
+  std::ifstream keyFile;
 
-  if (dbFile.fail())
+  string frstName, scndName, passWord, bal;
+
+  dbFile.open("dbAccounts.txt"); //open files
+  keyFile.open("key.txt");
+
+  if (dbFile.fail() || keyFile.fail()) //checks if file exists
+  {
+    title("ACCOUNT CREATION",
+          "No accounts exist."
+          "\nWe shall create a new one.");
+    cout << "Press enter to continue...";
+    pauseScreen(0);
+    dbFile.close();
+    keyFile.close();
+    createAccount(); //close everything, redirect to new user
+  }
+
+  //Decrypt & store in object
+  while (dbFile.eof() == false)
+  {
+    int intAllKeys, iteration = 0;
+
+    dbFile >> strTempDB; //get iteration
+
+    while (keyFile.eof() == false) //Decrypt
+    {
+      keyFile >> intAllKeys;
+      strTempDB[iteration] -= intAllKeys;
+      iteration++;
+    }
+
+    //Seperate items
+    while (strTempDB.size() > 0)
+    {
+      frstName = strTempDB.substr(0, strTempDB.find(","));
+      strTempDB.erase(0, frstName.size() + 1);
+      scndName = strTempDB.substr(0, strTempDB.find(","));
+      strTempDB.erase(0, scndName.size() + 1);
+      passWord = strTempDB.substr(0, strTempDB.find(","));
+      strTempDB.erase(0, passWord.size() + 1);
+      bal = strTempDB.substr(0, strTempDB.find(","));
+      strTempDB.erase(0, bal.size() + 1);
+
+      //Object creation
+      dbAccounts.push_back(Account(frstName,
+                                   scndName,
+                                   passWord,
+                                   std::stod(bal)));
+    }
+  }
+  //close files
+  dbFile.close();
+  keyFile.close();
+}
+
+string encryptData(string unencryptedData)
+{
+  srand(time(NULL)); //prevents constant random by seeding with time
+  string encryptedData = "";
+
+  for (int i = 0; i < unencryptedData.size(); i++)
+  {                                                          //fstream reads spaces as new item
+    int randomNum = rand() % 100;                            //get random number
+    decryptKey.push_back(randomNum);                         //append to keyfile
+    encryptedData.push_back(unencryptedData[i] + randomNum); //append to
+  }
+
+  decryptDBKeys.push_back(decryptKey); //send sequence to db
+
+  return encryptedData;
+}
+
+void writeDBToFile(string exitOrNot, int userIndex)
+{
+  std::ofstream dbFile; //create object
+  std::ofstream keyFile;
+  string temporaryDB; //temporary
+  string seperator = ",";
+
+  dbFile.open("dbAccounts.txt");
+  keyFile.open("key.txt");
+
+  if (dbFile.fail() || keyFile.fail())
   {
     cout << "Error reading file\n";
+    pauseScreen(0);
     exit(1);
   }
 
-  if (dbAccounts.size() != 0)
-  { //add each iteration to file seperated by spaces
-    for (int i = 0; i < dbAccounts.size(); i++)
-    {
-      if (i == dbAccounts.size() - 1)
-        lastElement = ""; //spaces are seen as next line
+  //store entire db to temporary string vector
+  for (int i = 0; i < dbAccounts.size(); i++)
+  {
+    if (i + 1 == dbAccounts.size())
+      seperator = "";
+    temporaryDB.append(dbAccounts[i].getFirstName() + "," +
+                       dbAccounts[i].getLastName() + "," +
+                       dbAccounts[i].getPassword() + "," +
+                       std::to_string(dbAccounts[i].getAmount()) +
+                       seperator);
+  }
 
-      dbFile << dbAccounts[i].getFirstName() + "," +
-                    dbAccounts[i].getLastName() + "," +
-                    std::to_string(dbAccounts[i].getAmount()) +
-                    "," +
-                    dbAccounts[i].getPassword() + lastElement;
+  //encrypt data
+  temporaryDB = encryptData(temporaryDB);
+
+  //save encrypted data to file
+  dbFile << temporaryDB;
+
+  //save decrypt keys to file
+  if (decryptDBKeys.size() != 0)
+  {
+    string spacer = " ";
+    for (int i = 0; i < decryptDBKeys.size(); i++)
+    {
+      for (int j = 0; j < decryptDBKeys[i].size(); j++)
+      {
+        if (i + 1 == decryptDBKeys.size() && j + 1 == decryptDBKeys[i].size())
+          spacer = "";
+        keyFile << std::to_string(decryptDBKeys[i][j]) + spacer;
+      }
     }
   }
 
-  dbFile.close(); //closes file
-  title("SAVING", "Successfully saved to file.");
-  cout << "Press any key to exit";
-  pauseScreen(0);
-  exit(1);
-}
+  dbFile.close();  //close file
+  keyFile.close(); //close keys file
 
-void readDBFromFile()
-{
-  std::ifstream dbFile;             //create object
-  std::vector<string> strContainer; //all lines here
-  string strLine;                   //each line will be stored here
-  dbFile.open("dbAccounts.txt");
-
-  if (dbFile.fail())
+  if (exitOrNot == "exit")
   {
-    cout << "Error reading file\n";
+    title("THANK YOU", "Bye.");
+    cout << "Press any key to exit";
+    pauseScreen(0);
     exit(1);
   }
+  else if (exitOrNot == "admin")
+    homeAdmin("passwordOff");
+  else if (exitOrNot == "user")
+    homeUser("passwordOff", "", userIndex);
 
-  //put contents of file into string vector
-  while (dbFile.eof() == false)
-  {
-    string firstN, secondN, balancE, passW;
-
-    dbFile >> strLine; //get iteration
-
-    strContainer.push_back(strLine);
-
-    firstN = strLine.substr(0, strLine.find(","));
-    strLine.erase(0, strLine.find(",") + 1);
-
-    secondN = strLine.substr(0, strLine.find(","));
-    strLine.erase(0, strLine.find(",") + 1);
-
-    balancE = strLine.substr(0, strLine.find(","));
-    strLine.erase(0, strLine.find(",") + 1);
-
-    double bal = std::stod(balancE); //convert to double
-
-    if (string::npos == strLine.find(","))
-      passW = strLine;
-
-    //pass to vector database that the program will work on
-    dbAccounts.push_back(Account(firstN, secondN, passW, bal));
-  }
-
-    //close file
-  dbFile.close();
+  //fallThrough. Will continue to next line
 }
 
 void home()
@@ -211,7 +299,7 @@ void homeAdmin(string passwordOnOff)
                         "\n3. Withdraw\n4. Create\n"
                         "5. Delete\n6. Edit Account"
                         "\n7. Switch to user"
-                        "\n8. Save and Exit",
+                        "\n8. Exit",
          inputPassword;
 
   if (passwordOnOff == "passwordOn")
@@ -225,7 +313,11 @@ void homeAdmin(string passwordOnOff)
       else
         title("Welcome, Admin.", "Invalid password.\n"
                                  "Please enter correct"
-                                 " password to\nproceed");
+                                 " password to\nproceed"
+                                 " or type \"home\" to go"
+                                 " back.");
+      if (inputPassword == "home")
+        home();
     } while (locked);
   }
   else
@@ -260,7 +352,7 @@ void homeAdmin(string passwordOnOff)
       homeUser("passwordOn", "", 0);
       break;
     case 8:
-      writeDBToFile();
+      exit(1);
       break;
     default:
       break;
@@ -270,7 +362,7 @@ void homeAdmin(string passwordOnOff)
 
 void homeUser(string passwordOnOff, string chosenAccount, int accIndex)
 {
-  int option, maxChoices = 4;
+  int option, maxChoices = 5;
   bool keepLooping = false, innerKeepLooping = false;
   string inputPassword;
 
@@ -290,31 +382,27 @@ void homeUser(string passwordOnOff, string chosenAccount, int accIndex)
 
       for (int i = 0; i < dbAccounts.size(); i++) //acc index finder
       {
-        userFound = userAccInput == dbAccounts[i].getFullName();
-        if (userFound)
+        userLoggedIn = userAccInput == dbAccounts[i].getFullName();
+        if (userLoggedIn)
         {
           accIndex = i;
           chosenAccount = dbAccounts[i].getFullName();
           do
           {
             if (innerKeepLooping == false)
-              title("Welcome," + chosenAccount,
+              title("Welcome, " + chosenAccount,
                     "Enter your password"
                     " to continue");
             else
-              title("Welcome," + chosenAccount,
+              title("Welcome, " + chosenAccount,
                     "Entered password is invalid.\n"
                     "Try again or type \"home\" to go back");
             std::getline(cin, inputPassword);
 
             if (inputPassword == dbAccounts[i].getPassword())
-            {
               innerKeepLooping = false;
-            }
             else
-            {
               innerKeepLooping = true;
-            }
 
           } while (innerKeepLooping);
 
@@ -324,13 +412,17 @@ void homeUser(string passwordOnOff, string chosenAccount, int accIndex)
         else
           keepLooping = true;
       }
+      //Go back home
+      if (userAccInput == "home")
+        home();
     } while (keepLooping);
   }
 
   string wlcTitle = "Welcome, " + chosenAccount +
                     ".\nPlease select one of the following:";
   string optionsTitle = "1. Summary\n2. Deposit\n"
-                        "3. Withdraw\n4. Switch to admin";
+                        "3. Withdraw\n4. Switch to admin"
+                        "\n5. Exit";
 
   //Ask get choice
   title(wlcTitle, optionsTitle);
@@ -344,26 +436,26 @@ void homeUser(string passwordOnOff, string chosenAccount, int accIndex)
     withdrawing(accIndex, "user");
   if (option == 4)
   {
-    userFound = false;
+    userLoggedIn = false;
     home();
   }
-
-  //Go back home
-  if (userAccInput == "home")
-    home();
+  if (option == 5)
+    exit(1);
 }
 
-void createAccount() //done
+void createAccount()
 {
   string firstName, lastName, password, fullName;
   double initialAmount = 0;
   bool invalidPassword = false, loopNameGet = false;
 
   do
-  { //get name & check database for duplicates
-    firstName = createName("first", "new");
-    lastName = createName("last", "new");
+  { //get names
+    firstName = checkName("first", "new");
+    lastName = checkName("last", "new");
     fullName = firstName + " " + lastName;
+
+    //and checks database for duplicates
     for (int i = 0; i < dbAccounts.size(); i++)
     {
       if (fullName == dbAccounts[i].getFullName())
@@ -413,6 +505,10 @@ void createAccount() //done
       password,
       initialAmount));
 
+  writeDBToFile("fallThrough", 0);
+  title("CREATING", "Success.");
+  cout << "Press enter to continue...";
+  pauseScreen(0);
   homeAdmin("passwordOff");
 }
 
@@ -427,7 +523,7 @@ bool isPassInvalid(string iPassword)
 }
 
 //return name if valid
-string createName(string firstOrLast, string newOrEdit)
+string checkName(string firstOrLast, string newOrEdit)
 {
   string newName, leadTitle, optionsTitle;
 
@@ -562,8 +658,6 @@ void withdrawing(int index, string adminOrUser)
                                      invalidTitle,
                                      0,
                                      dbAccounts[i].getAmount());
-      dbAccounts[i]
-          .withdrawAmount(withDrawAmount);
       break;
     default:
       break;
@@ -573,6 +667,7 @@ void withdrawing(int index, string adminOrUser)
     {
       dbAccounts[i].withdrawAmount(withDrawAmount);
       keepLooping = false;
+      writeDBToFile("fallThrough", 0);
     }
     else
       keepLooping = true;
@@ -634,10 +729,11 @@ void depositing(int i, string adminOrUser) //done
                        strDeposit +
                        "\nCurrent Balance: " +
                        strBalance + " PHP");
+  writeDBToFile("fallThrough", 0);
   cout << "Press enter to continue...";
   pauseScreen(0);
 
-  if (adminOrUser == "admin") //return to home
+  if (adminOrUser == "admin")
     homeAdmin("passwordOff");
   else
     homeUser("passwordOff", dbAccounts[i].getFullName(), i);
@@ -688,7 +784,7 @@ string displayAllAccounts()
   return aContainer;
 }
 
-void searchAcc()
+void searchAcc() //feature coming soon
 {
 }
 
@@ -715,9 +811,9 @@ void deleteAccount()
           "We will create a new account.");
     cout << "Press enter to continue...";
     pauseScreen(0);
-
     createAccount();
   }
+  writeDBToFile("fallThrough", 0);
   homeAdmin("passwordOff");
 }
 
@@ -732,7 +828,7 @@ void title(std::string leadTitle, std::string optionsTitle)
 
 void editAccount()
 {
-  int dbElement, xC, xIndex, maxChoices = dbAccounts.size();
+  int dbElement, xOption, xIndex, maxChoices = dbAccounts.size();
   string xfName, xlName, leadTitle = "EDITING";
 
   title(leadTitle + "\nWhich account?", displayAllAccounts());
@@ -741,18 +837,21 @@ void editAccount()
   xIndex = dbElement - 1;
 
   title(leadTitle + "\nChange what?", "1. Name");
-  xC = checkChoice(leadTitle + "\nChange what?", "1. Name", 1);
+  xOption = checkChoice(leadTitle + "\nChange what?", "1. Name", 1);
 
-  if (xC == 1)
+  if (xOption == 1)
   {
     title("Enter new first name: ", ">");
-    xfName = createName("first", "edit");
+    xfName = checkName("first", "edit");
     title("Enter new last name: ", ">");
-    xlName = createName("last", "edit");
+    xlName = checkName("last", "edit");
 
     dbAccounts[xIndex].changeName(xfName, xlName);
+    writeDBToFile("fallThrough", 0);
     summary(xIndex, "admin");
   }
+
+  //delete later... might never go through
   cout << "Invalid Input.\n";
   homeAdmin("passwordOff");
 }
@@ -829,7 +928,7 @@ bool isItAValidNumber(bool didItFail) //returns true if valid
     /*
       Discards extra input.
       If user types in numbers then letters, the
-      letters and everything after will be discarded.
+      letters and temporaryDB after will be discarded.
     */
     cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     return true;
