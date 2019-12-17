@@ -3,14 +3,14 @@
 //Title: Simple Account App
 //Programmers: Emmanuel Valdueza, Jake Ogsimer, Mark Perez
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <limits>  //gets cin size to handle bad input
-#include <iomanip> //removes scientific notation
-#include <fstream> //handles files
+#include <iostream> // cout cin
+#include <string>   //used to handle text
+#include <vector>   //is a library to handle arrays dynamically
+#include <limits>   //gets cin size to handle bad input
+#include <iomanip>  //removes scientific notation
+#include <fstream>  //handles files
 
-using std::cin;
+using std::cin; //allows us to remove std::
 using std::cout;
 using std::string;
 
@@ -123,23 +123,23 @@ int main()
 {
   readDBFromFile(); //loads database
 
-  home();
+  home(); //UI selection
 
   pauseScreen(0);
   return 0;
 }
 
+//LOAD FROM Database
 void readDBFromFile()
 {
   std::ifstream dbFile; //create object
   std::ifstream keyFile;
-
   string frstName, scndName, passWord, bal;
 
   dbFile.open("dbAccounts.txt"); //open files
   keyFile.open("key.txt");
 
-  if (dbFile.fail()) //checks if file exists
+  if (dbFile.fail()) //checks if db file exists
   {
     title("ACCOUNT CREATION",
           "No accounts exist."
@@ -150,7 +150,7 @@ void readDBFromFile()
     keyFile.close();
     createAccount(); //close everything, redirect to new user
   }
-  else if (keyFile.fail())
+  else if (keyFile.fail()) //check if key file exists
   {
     title("KEY FILE MISSING",
           "delete the database or\n"
@@ -161,23 +161,21 @@ void readDBFromFile()
   }
 
   //Decrypt & store in object
-  while (dbFile.eof() == false)
+  while (dbFile.eof() == false) //.eof end of fle
   {
     int keyIteration = 0;
-    int iteration = 0;
+    int strIndex = 0;
 
     dbFile >> strTempDB; //get iteration
 
-    while (keyFile.eof() == false) //Decrypt
-    {
+    while (keyFile.eof() == false)
+    { //while not empty, revert ascii char positions
       keyFile >> keyIteration;
-
-      strTempDB[iteration] -= keyIteration;
-
-      iteration++;
+      strTempDB[strIndex] -= keyIteration;
+      strIndex++;
     }
 
-    //Seperate items
+    //Seperate items & push to vector as object
     while (strTempDB.size() > 0)
     {
       frstName = strTempDB.substr(0, strTempDB.find(","));
@@ -189,7 +187,7 @@ void readDBFromFile()
       bal = strTempDB.substr(0, strTempDB.find(","));
       strTempDB.erase(0, bal.size() + 1);
 
-      //Object creation
+      //Account Object creation
       dbAccounts.push_back(Account(frstName,
                                    scndName,
                                    passWord,
@@ -199,95 +197,6 @@ void readDBFromFile()
   //close files
   dbFile.close();
   keyFile.close();
-}
-
-void writeDBToFile(string exitOrNot, int userIndex)
-{
-  std::ofstream dbFile; //create object
-  std::ofstream keyFile;
-  string temporaryDB; //temporary
-  string seperator = ",";
-
-  dbFile.open("dbAccounts.txt");
-  keyFile.open("key.txt");
-
-  if (dbFile.fail() || keyFile.fail())
-  {
-    cout << "Error reading file\n";
-    pauseScreen(0);
-    exit(1);
-  }
-
-  //store entire db to temporary string vector
-  for (int i = 0; i < dbAccounts.size(); i++)
-  {
-    if (i + 1 == dbAccounts.size())
-      seperator = "";
-    temporaryDB.append(dbAccounts[i].getFirstName() + "," +
-                       dbAccounts[i].getLastName() + "," +
-                       dbAccounts[i].getPassword() + "," +
-                       std::to_string(dbAccounts[i].getAmount()) +
-                       seperator);
-  }
-
-  //encrypt data & send all accounts
-  temporaryDB = encryptData(temporaryDB);
-
-  //save encrypted data to file
-  dbFile << temporaryDB;
-
-  //save decrypt keys to file
-  if (decryptDBKeys.size() != 0)
-  {
-    string spacer = " ";
-    for (int i = 0; i < decryptDBKeys.size(); i++)
-    {
-      for (int j = 0; j < decryptDBKeys[i].size(); j++)
-      {
-        if (i + 1 == decryptDBKeys.size() && j + 1 == decryptDBKeys[i].size())
-          spacer = "";
-        keyFile << std::to_string(decryptDBKeys[i][j]) + spacer;
-      }
-    }
-  }
-
-  dbFile.close();  //close file
-  keyFile.close(); //close keys file
-
-  if (exitOrNot == "exit")
-  {
-    title("THANK YOU", "Bye.");
-    cout << "Press any key to exit";
-    pauseScreen(0);
-    exit(1);
-  }
-  else if (exitOrNot == "admin")
-    homeAdmin("passwordOff");
-  else if (exitOrNot == "user")
-    homeUser("passwordOff", "", userIndex);
-
-  //fallThrough. Will continue to next line
-}
-
-//encrypts all accoounts
-string encryptData(string unencryptedData)
-{
-  srand(time(NULL)); //prevents constant random by seeding with time
-  string encryptedData = "";
-
-  decryptKey.clear(); //make sure there are no left over keys
-  decryptDBKeys.clear();
-
-  for (int i = 0; i < unencryptedData.size(); i++)
-  {                                                          //fstream reads spaces as new item
-    int randomNum = 1 + (rand() % 5);                        //get random number
-    decryptKey.push_back(randomNum);                         //append to keyfile
-    encryptedData.push_back(unencryptedData[i] + randomNum); //append to
-  }
-
-  decryptDBKeys.push_back(decryptKey); //send sequence to db
-
-  return encryptedData;
 }
 
 void home()
@@ -384,7 +293,7 @@ void homeUser(string passwordOnOff, string chosenAccount, int accIndex)
   bool keepLooping = false, innerKeepLooping = false;
   string inputPassword;
 
-  if (passwordOnOff == "passwordOn")
+  if (passwordOnOff == "passwordOn") //logged in on/off
   {
     do
     {
@@ -459,6 +368,96 @@ void homeUser(string passwordOnOff, string chosenAccount, int accIndex)
   }
   if (option == 5)
     exit(1);
+}
+
+//SAVE & encrypt all accounts to file
+void writeDBToFile(string exitOrNot, int userIndex)
+{
+  std::ofstream dbFile; //create file object
+  std::ofstream keyFile;
+  string temporaryDB; //temporary
+  string seperator = ",";
+
+  dbFile.open("dbAccounts.txt");
+  keyFile.open("key.txt");
+
+  if (dbFile.fail() || keyFile.fail())
+  {
+    cout << "Error reading file\n";
+    pauseScreen(0);
+    exit(1);
+  }
+
+  //store entire db to temporary string vector
+  for (int i = 0; i < dbAccounts.size(); i++)
+  {
+    if (i + 1 == dbAccounts.size())
+      seperator = "";
+    temporaryDB.append(dbAccounts[i].getFirstName() + "," +
+                       dbAccounts[i].getLastName() + "," +
+                       dbAccounts[i].getPassword() + "," +
+                       std::to_string(dbAccounts[i].getAmount()) +
+                       seperator);
+  }
+
+  //encrypt all accounts as single string
+  temporaryDB = encryptData(temporaryDB);
+
+  //save encrypted data to file
+  dbFile << temporaryDB;
+
+  //save decrypt keys to file
+  if (decryptDBKeys.size() != 0)
+  {
+    string spacer = " ";
+    for (int i = 0; i < decryptDBKeys.size(); i++)
+    {
+      for (int j = 0; j < decryptDBKeys[i].size(); j++)
+      {
+        if (i + 1 == decryptDBKeys.size() && j + 1 == decryptDBKeys[i].size())
+          spacer = "";
+        keyFile << std::to_string(decryptDBKeys[i][j]) + spacer;
+      }
+    }
+  }
+
+  dbFile.close();  //close file
+  keyFile.close(); //close keys file
+
+  if (exitOrNot == "exit")
+  {
+    title("THANK YOU", "Bye.");
+    cout << "Press any key to exit";
+    pauseScreen(0);
+    exit(1);
+  }
+  else if (exitOrNot == "admin")
+    homeAdmin("passwordOff");
+  else if (exitOrNot == "user")
+    homeUser("passwordOff", "", userIndex);
+
+  //fallThrough. Will continue to next line
+}
+
+//encrypts all accoounts
+string encryptData(string unencryptedData)
+{
+  srand(time(NULL)); //prevents constant random by seeding with time
+  string encryptedData = "";
+
+  decryptKey.clear(); //make sure there are no left over keys
+  decryptDBKeys.clear();
+
+  for (int i = 0; i < unencryptedData.size(); i++)
+  {                                                          //fstream reads spaces as new item
+    int randomNum = 1 + (rand() % 5);                        //get random number
+    decryptKey.push_back(randomNum);                         //append to keyfile
+    encryptedData.push_back(unencryptedData[i] + randomNum); //append to
+  }
+
+  decryptDBKeys.push_back(decryptKey); //send sequence to db
+
+  return encryptedData;
 }
 
 void createAccount()
@@ -629,7 +628,9 @@ void withdrawing(int index, string adminOrUser)
   string leadTitle = "WITHDRAWING";
   string adminTitle = "\nWithdraw from which account?";
   string askTitle = "\nHow much would you like to withdraw?";
-  string optionsTitle = "1. 500\n2. 1500"
+  string optionsTitle = "Current Balance: " +
+                        strCurrentBalance +
+                        "\n1. 500\n2. 1500"
                         "\n3. 3000\n4. 5000\n5. Custom";
   string invalidTitle = "Invalid Input.\n"
                         "Amount should be less than " +
@@ -686,8 +687,15 @@ void withdrawing(int index, string adminOrUser)
       dbAccounts[i].withdrawAmount(withDrawAmount);
       keepLooping = false;
     }
-    else
+    else // if preset money is less than balance
+    {
       keepLooping = true;
+      title("WITHDRAWING", "Not enough money in account.\n"
+                           "Current Balance: " +
+                               strCurrentBalance + " PHP");
+      cout << "Press any key to continue";
+      pauseScreen(0);
+    }
   } while (keepLooping);
 
   //convert doubles to strings & display success
@@ -714,8 +722,12 @@ void depositing(int i, string adminOrUser) //done
 {
   int iAdmin, maxChoices = dbAccounts.size();
   double amount2Deposit;
+  string strCurrentBalance = std::to_string(dbAccounts[i].getAmount());
+  strCurrentBalance.erase(strCurrentBalance.size() - 4, 4);
   string leadTitle = "DEPOSITING";
-  string specifyOptionsTitle = "Specify amount"
+  string specifyOptionsTitle = "Current Balance: " +
+                               strCurrentBalance +
+                               "\nSpecify amount"
                                " to deposit";
   string askAccTitle = "Deposit to which account?";
   string optionsTitle = "...none for now";
@@ -745,7 +757,7 @@ void depositing(int i, string adminOrUser) //done
   title(leadTitle, "Deposit Success.\n"
                    "Amount Deposited: " +
                        strDeposit +
-                       "\nCurrent Balance: " +
+                       "\nNew Balance: " +
                        strBalance + " PHP");
   writeDBToFile("fallThrough", 0);
   cout << "Press enter to continue...";
