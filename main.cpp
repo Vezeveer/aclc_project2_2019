@@ -112,10 +112,13 @@ void Account::changeName(string xName, string yName)
 
 std::vector<Account> dbAccounts; //objects of accounts
 bool userLoggedIn = false;
+string adminPassword = "123";
 string userAccInput; //compare input with db
 std::vector<std::vector<int>> decryptDBKeys;
 std::vector<int> decryptKey;
 string strTempDB;
+int tempOpenIteration = 0; //delete Later
+int tempCloseIteration = 0;
 
 int main()
 {
@@ -152,14 +155,17 @@ void readDBFromFile()
   //Decrypt & store in object
   while (dbFile.eof() == false)
   {
-    int intAllKeys, iteration = 0;
+    int keyIteration = 0;
+    int iteration = 0;
 
     dbFile >> strTempDB; //get iteration
 
     while (keyFile.eof() == false) //Decrypt
     {
-      keyFile >> intAllKeys;
-      strTempDB[iteration] -= intAllKeys;
+      keyFile >> keyIteration;
+
+      strTempDB[iteration] -= keyIteration;
+
       iteration++;
     }
 
@@ -185,23 +191,6 @@ void readDBFromFile()
   //close files
   dbFile.close();
   keyFile.close();
-}
-
-string encryptData(string unencryptedData)
-{
-  srand(time(NULL)); //prevents constant random by seeding with time
-  string encryptedData = "";
-
-  for (int i = 0; i < unencryptedData.size(); i++)
-  {                                                          //fstream reads spaces as new item
-    int randomNum = rand() % 100;                            //get random number
-    decryptKey.push_back(randomNum);                         //append to keyfile
-    encryptedData.push_back(unencryptedData[i] + randomNum); //append to
-  }
-
-  decryptDBKeys.push_back(decryptKey); //send sequence to db
-
-  return encryptedData;
 }
 
 void writeDBToFile(string exitOrNot, int userIndex)
@@ -233,7 +222,7 @@ void writeDBToFile(string exitOrNot, int userIndex)
                        seperator);
   }
 
-  //encrypt data
+  //encrypt data & send all accounts
   temporaryDB = encryptData(temporaryDB);
 
   //save encrypted data to file
@@ -272,6 +261,27 @@ void writeDBToFile(string exitOrNot, int userIndex)
   //fallThrough. Will continue to next line
 }
 
+//encrypts all accoounts
+string encryptData(string unencryptedData)
+{
+  srand(time(NULL)); //prevents constant random by seeding with time
+  string encryptedData = "";
+
+  decryptKey.clear(); //make sure there are no left over keys
+  decryptDBKeys.clear();
+
+  for (int i = 0; i < unencryptedData.size(); i++)
+  {                                                          //fstream reads spaces as new item
+    int randomNum = 1 + (rand() % 5);                        //get random number
+    decryptKey.push_back(randomNum);                         //append to keyfile
+    encryptedData.push_back(unencryptedData[i] + randomNum); //append to
+  }
+
+  decryptDBKeys.push_back(decryptKey); //send sequence to db
+
+  return encryptedData;
+}
+
 void home()
 {
   int x, maxChoices = 2;
@@ -308,7 +318,7 @@ void homeAdmin(string passwordOnOff)
     do
     {
       getline(cin, inputPassword);
-      if (inputPassword == "123")
+      if (inputPassword == adminPassword)
         locked = false;
       else
         title("Welcome, Admin.", "Invalid password.\n"
@@ -617,8 +627,8 @@ void withdrawing(int index, string adminOrUser)
                         "Amount should be less than " +
                         strCurrentBalance + " PHP";
 
-  if (adminOrUser == "admin")
-  { //show which accounts
+  if (adminOrUser == "admin") //if admin, overwrite variables
+  {                           //show which accounts
     int maxAccChoices = dbAccounts.size();
     maxDrawChoices = 5;
 
@@ -630,7 +640,7 @@ void withdrawing(int index, string adminOrUser)
         1;
   }
 
-  //Ask Preset Amount
+  //Ask Preset Amount, admin & user
   do
   {
     title(leadTitle + askTitle, optionsTitle);
@@ -667,7 +677,6 @@ void withdrawing(int index, string adminOrUser)
     {
       dbAccounts[i].withdrawAmount(withDrawAmount);
       keepLooping = false;
-      writeDBToFile("fallThrough", 0);
     }
     else
       keepLooping = true;
@@ -679,6 +688,7 @@ void withdrawing(int index, string adminOrUser)
   string strDrawAmount = std::to_string(withDrawAmount);
   strDrawAmount.erase(strDrawAmount.size() - 4, 4);
 
+  writeDBToFile("fallThrough", 0);
   title(leadTitle, "Success.\n"
                    "Amount Drawn: " +
                        strDrawAmount +

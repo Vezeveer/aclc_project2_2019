@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+dbAccounts.txt
+key.txt
+dbAccounts.txt
