@@ -20,8 +20,7 @@ void title(std::string pTitle, std::string pOptions);
 void createAccount();
 void home(), homeUser(string, string, int), homeAdmin(string);
 void deleteAccount();
-bool isItANum(bool didItFail);
-double checkGetAccAmount(int, string, string, string);
+bool isItANum(bool didItFail); //takes in cin.fail()
 void editAccount();
 string displayAllAccounts();
 int checkChoice(string, string, int);
@@ -140,7 +139,7 @@ void readDBFromFile()
   dbFile.open("dbAccounts.txt"); //open files
   keyFile.open("key.txt");
 
-  if (dbFile.fail() || keyFile.fail()) //checks if file exists
+  if (dbFile.fail()) //checks if file exists
   {
     title("ACCOUNT CREATION",
           "No accounts exist."
@@ -150,6 +149,15 @@ void readDBFromFile()
     dbFile.close();
     keyFile.close();
     createAccount(); //close everything, redirect to new user
+  }
+  else if (keyFile.fail())
+  {
+    title("KEY FILE MISSING",
+          "delete the database or\n"
+          "place key file in directory");
+    cout << "Press enter to exit...";
+    pauseScreen(0);
+    exit(1);
   }
 
   //Decrypt & store in object
@@ -897,25 +905,6 @@ double getMoneyInput(string leadTitle,
   } while (keepLooping);
 
   return moneyInput;
-}
-
-//might delete this function
-double checkGetAccAmount(int i,
-                         string depositOrWithdraw,
-                         string leadTitle,
-                         string optionsTitle)
-{
-  string invalidTitle = "Wrong amount";
-  double balance = dbAccounts[i].getAmount();
-  //remove scientific notation
-  string strBalance = std::to_string(balance);
-  strBalance.erase(strBalance.size() - 4, 4);
-  double xCash;
-  bool invalidInput = true;
-
-  xCash = getMoneyInput(leadTitle, optionsTitle, invalidTitle, 500, 50000);
-
-  return xCash;
 }
 
 bool isItAValidNumber(bool didItFail) //returns true if valid
